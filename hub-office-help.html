@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head> 
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src  'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
+  style-src   'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src    https://fonts.gstatic.com;
+  connect-src https://openrouter.ai;
+  img-src     'self' blob: data:;
+">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extrator de RG</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2333;
+    --border: #2a3050;
+    --border-light: #323a5a;
+    --accent: #4f7cff;
+    --accent-dim: rgba(79,124,255,0.12);
+    --accent-glow: rgba(79,124,255,0.25);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.12);
+    --red: #f43f5e;
+    --red-dim: rgba(244,63,94,0.12);
+    --yellow: #f59e0b;
+    --yellow-dim: rgba(245,158,11,0.12);
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --muted2: #94a3b8;
+    --radius: 10px;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── Layout ── */
+  .shell {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  /* ── Header ── */
+  .header {
+    margin-bottom: 28px;
+  }
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+    border: 1px solid var(--accent-glow);
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+    letter-spacing: -0.3px;
+  }
+  .header p {
+    color: var(--muted2);
+    font-size: 13px;
+  }
+
+  /* ── API Key ── */
+  .api-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .api-section label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted2);
+    white-space: nowrap;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .api-section input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .api-section input:focus { border-color: var(--accent); }
+  .api-section input::placeholder { color: var(--muted); }
+  #api-status {
+    font-size: 11px;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  /* ── Drop zone ── */
+  #drop-zone {
+    border: 1.5px dashed var(--border-light);
+    border-radius: 14px;
+    padding: 44px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    margin-bottom: 18px;
+    background: transparent;
+    position: relative;
+  }
+  #drop-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  #drop-zone .drop-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--surface2);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+    font-size: 20px;
+  }
+  #drop-zone .drop-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  #drop-zone .drop-sub {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  #file-input { display: none; }
+
+  /* ── Stats bar ── */
+  .stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .stat-pill.done    { background: var(--green-dim); color: var(--green); }
+  .stat-pill.error   { background: var(--red-dim);   color: var(--red);   }
+  .stat-pill.proc    { background: var(--accent-dim); color: var(--accent);}
+  .stat-pill.pending { background: var(--surface2);  color: var(--muted2);}
+  .stats-bar .spacer { flex: 1; }
+
+  /* ── Progress ── */
+  .progress-wrap {
+    margin-bottom: 16px;
+  }
+  .progress-track {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #7c5cfc);
+    border-radius: 999px;
+    transition: width .4s ease;
+  }
+  .progress-label {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: var(--font);
+    transition: opacity .15s, transform .1s;
+    white-space: nowrap;
+  }
+  .btn:hover { opacity: .85; }
+  .btn:active { transform: scale(.97); }
+  .btn-primary  { background: var(--accent); color: #fff; }
+  .btn-success  { background: var(--green);  color: #0a1a12; }
+  .btn-danger   { background: var(--red);    color: #fff; }
+  .btn-ghost    { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border-light); }
+  .btn-stop     { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--yellow); }
+  .btn:disabled { opacity: .35; cursor: not-allowed; pointer-events: none; }
+
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    width: fit-content;
+  }
+  .tab {
+    padding: 5px 14px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--muted2);
+    border: none;
+    background: transparent;
+    font-family: var(--font);
+    transition: all .15s;
+  }
+  .tab.active {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border-light);
+  }
+
+  /* ── File list ── */
+  #file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .file-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    transition: border-color .15s;
+  }
+  .file-row:hover { border-color: var(--border-light); }
+  .file-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .file-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+  .file-info { flex: 1; min-width: 0; }
+  .file-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .file-err {
+    font-size: 11px;
+    color: var(--red);
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-pending  { background: var(--muted); }
+  .dot-proc     { background: var(--accent); animation: pulse 1s infinite; }
+  .dot-done     { background: var(--green); }
+  .dot-error    { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .remove-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 15px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color .15s;
+    flex-shrink: 0;
+  }
+  .remove-btn:hover { color: var(--red); }
+
+  /* ── Data table ── */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  th {
+    padding: 9px 14px;
+    text-align: left;
+    color: var(--muted2);
+    font-weight: 600;
+    font-size: 11px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    white-space: nowrap;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  td {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    white-space: nowrap;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .empty-state {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* ── Edit cell ── */
+  td.editable:hover { cursor: text; background: var(--accent-dim); }
+  td input.cell-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 12px;
+    font-family: var(--font);
+    width: 100%;
+    min-width: 80px;
+  }
+
+  /* ── Spinner ── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { display: inline-block; animation: spin .7s linear infinite; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    color: var(--text);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all .25s;
+    pointer-events: none;
+    z-index: 999;
+    max-width: 320px;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-badge">  RG · CNH · CPF · IPTU</div>
+    <h1>Extrator de Dados de Documentos</h1>
+    <p>Processa qualquer imagem de documento em lote e exporta para Excel</p>
+  </div>
+
+  <!-- API Key -->
+  <div class="api-section">
+    <label>API KEY</label>
+    <input type="password" id="api-key" placeholder="inserir API KEY... (Hiram)" autocomplete="off">
+    <span id="api-status" style="color:var(--muted)">—</span>
+  </div>
+
+  <!-- Drop zone -->
+  <div id="drop-zone">
+    <div class="drop-icon">🪪</div>
+    <div class="drop-title">Arraste os Documentos aqui ou clique para selecionar</div>
+    <div class="drop-sub">JPG, PNG, WEBP · múltiplos arquivos de uma vez</div>
+    <input type="file" id="file-input" multiple accept="image/*,.jpg,.jpeg,.png,.webp,.bmp">
+  </div>
+
+  <!-- Stats + Controls -->
+  <div id="stats-area" style="display:none">
+    <div class="stats-bar" id="stats-pills"></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div></div>
+      <div class="progress-label" id="progress-label">0% concluído</div>
+    </div>
+    <div class="controls" id="controls"></div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('files')" id="tab-files">Arquivos (<span id="tab-files-count">0</span>)</button>
+      <button class="tab" onclick="switchTab('data')" id="tab-data">Dados (<span id="tab-data-count">0</span>)</button>
+    </div>
+  </div>
+
+  <!-- File list -->
+  <div id="panel-files"><div id="file-list"></div></div>
+
+  <!-- Data table -->
+  <div id="panel-data" style="display:none">
+    <div class="table-wrap">
+      <div class="empty-state" id="table-empty">Nenhum dado extraído ainda. Processe os arquivos na aba Arquivos.</div>
+      <table id="data-table" style="display:none">
+        <thead>
+          <tr>
+            <th>#</th><th>Arquivo</th>
+            <th>Nome</th><th>RG</th><th>CPF</th><th>Nascimento</th>
+            <th>Naturalidade</th><th>Mãe</th><th>Pai</th>
+            <th>Órgão</th><th>Expedição</th><th>Sexo</th>
+          </tr>
+        </thead>
+        <tbody id="data-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+const BATCH = 5;
+const FIELDS = [
+  ['nome','Nome'],['rg','RG'],['cpf','CPF'],['data_nascimento','Nascimento'],
+  ['naturalidade','Naturalidade'],['filiacao_mae','Mãe'],['filiacao_pai','Pai'],
+  ['orgao_expedidor','Órgão'],['data_expedicao','Expedição'],['sexo','Sexo']
+];
+
+let files     = [];   // {file, name, preview}
+let statuses  = {};   // name → pending|processing|done|error
+let errors    = {};   // name → msg
+let results   = {};   // name → extracted obj
+let running   = false;
+let stopFlag  = false;
+let activeTab = 'files';
+
+// ── Helpers ────────────────────────────────────────────────────────
+function toast(msg, dur=2800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function previewURL(file) {
+  return new Promise(res => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.readAsDataURL(file);
+  });
+}
+
+function mediaType(file) {
+  if (file.type && file.type.startsWith('image/')) return file.type;
+  const ext = file.name.split('.').pop().toLowerCase();
+  return {jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',bmp:'image/bmp'}[ext]||'image/jpeg';
+}
+
+function apiKey() { return document.getElementById('api-key').value.trim(); }
+
+// ── API Call ───────────────────────────────────────────────────────
+async function extractRG(b64, mt, filename) {
+  const key = apiKey();
+  if (!key) throw new Error('Insira a API Key');
+
+  const prompt = `Você é um extrator de dados de RG brasileiro. Analise a imagem e retorne SOMENTE um objeto JSON puro, sem markdown, sem texto adicional, sem blocos de código. Campos obrigatórios no JSON (null se não encontrar): nome, rg, cpf, data_nascimento, naturalidade, filiacao_mae, filiacao_pai, orgao_expedidor, data_expedicao, sexo.\n\nExtraia todos os dados visíveis neste RG.`;
+
+  const res = await fetch(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      method: 'POST',
+      headers: {
+    "Authorization": `Bearer ${key}`,
+    "Content-Type": "application/json",
+    "HTTP-Referer": window.location.origin,
+    "X-Title": "Extrator RG"
+},
+
+body: JSON.stringify({
+    model: "qwen/qwen3-vl-32b-instruct",
+
+    max_tokens: 512,
+
+    temperature: 0,
+
+    messages: [
+        {
+            role: "user",
+            content: [
+                {
+                    type: "text",
+                    text: prompt
+                },
+                {
+                    type: "image_url",
+                    image_url: {
+                        url: `data:${mt};base64,${b64}`
+                    }
+                }
+            ]
+        }
+    ]
+})
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  const text =
+    data.choices?.[0]?.message?.content || "";
+  const clean = text.replace(/```json?|```/g, '').trim();
+  try {
+    return { ...JSON.parse(clean), arquivo: filename };
+  } catch {
+    const m = clean.match(/\{[\s\S]*\}/);
+    if (m) return { ...JSON.parse(m[0]), arquivo: filename };
+    throw new Error('Resposta inválida da API');
+  }
+}
+
+// ── organização dos arquivos ────────────────────────────────────────────────
+
+const id = crypto.randomUUID();
+  files.push({ file: f, id, name: f.name, preview });
+  statuses[id] = 'pending'; // chave = id, não nome
+
+
+async function addFiles(fileList) {
+  const imgs = Array.from(fileList).filter(f => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    return ['jpg','jpeg','png','webp','bmp'].includes(ext) || f.type.startsWith('image/');
+  });
+  const existing = new Set(files.map(f => f.name));
+  let added = 0;
+  for (const f of imgs) {
+    if (existing.has(f.name)) continue;
+    const preview = await previewURL(f);
+    files.push({ file: f, name: f.name, preview });
+    statuses[f.name] = 'pending';
+    added++;
+  }
+  if (added) { toast(`${added} arquivo(s) adicionado(s)`); render(); }
+}
+
+function removeFile(name) {
+  files = files.filter(f => f.name !== name);
+  delete statuses[name]; delete errors[name]; delete results[name];
+  render();
+}
+
+function clearAll() {
+  files = []; statuses = {}; errors = {}; results = {};
+  render();
+}
+
+// ── processamento ─────────────────────────────────────────────────────
+async function processFiles() {
+  if (!apiKey()) { toast('⚠️ Insira a API Key antes de processar'); return; }
+  const toProc = files.filter(f => ['pending','error'].includes(statuses[f.name]));
+  if (!toProc.length) return;
+  running = true; stopFlag = false;
+  render();
+
+  for (let i = 0; i < toProc.length; i += BATCH) {
+    if (stopFlag) break;
+    const batch = toProc.slice(i, i + BATCH);
+    batch.forEach(f => { statuses[f.name] = 'processing'; });
+    render();
+
+    const settled = await Promise.allSettled(
+      batch.map(async ({ file, name }) => {
+        const b64 = await fileToBase64(file);
+        return extractRG(b64, mediaType(file), name);
+      })
+    );
+
+    settled.forEach((r, idx) => {
+      const name = batch[idx].name;
+      if (r.status === 'fulfilled') {
+        statuses[name] = 'done';
+        results[name] = r.value;
+      } else {
+        statuses[name] = 'error';
+        errors[name] = r.reason?.message || 'Erro';
+      }
+    });
+    render();
+  }
+
+  running = false;
+  render();
+  const doneCount = Object.values(statuses).filter(s => s === 'done').length;
+  toast(`✅ Concluído · ${doneCount} RG(s) extraído(s)`);
+}
+
+function retryErrors() {
+  Object.keys(statuses).forEach(k => { if (statuses[k] === 'error') statuses[k] = 'pending'; });
+  render();
+}
+
+// ── exportação ─────────────────────────────────────────────────────────
+function exportExcel() {
+  const rows = Object.values(results);
+  if (!rows.length) { toast('Nenhum dado para exportar'); return; }
+  const sheet = rows.map((r, i) => ({
+    '#': i + 1,
+    'Arquivo': r.arquivo,
+    ...Object.fromEntries(FIELDS.map(([k, l]) => [l, r[k] || '']))
+  }));
+  const ws = XLSX.utils.json_to_sheet(sheet);
+  const keys = Object.keys(sheet[0]);
+  ws['!cols'] = keys.map(k => ({ wch: Math.max(k.length, ...sheet.map(r => String(r[k]||'').length)) + 2 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Dados RG');
+  XLSX.writeFile(wb, `rg_admissoes_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast(`📥 Excel exportado com ${rows.length} registro(s)`);
+}
+
+//  render
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-files').classList.toggle('active', tab === 'files');
+  document.getElementById('tab-data').classList.toggle('active',  tab === 'data');
+  document.getElementById('panel-files').style.display = tab === 'files' ? '' : 'none';
+  document.getElementById('panel-data').style.display  = tab === 'data'  ? '' : 'none';
+}
+
+function render() {
+  const total    = files.length;
+  const done     = files.filter(f => statuses[f.name] === 'done').length;
+  const errCount = files.filter(f => statuses[f.name] === 'error').length;
+  const proc     = files.filter(f => statuses[f.name] === 'processing').length;
+  const pending  = files.filter(f => statuses[f.name] === 'pending').length;
+  const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+  const resCount = Object.keys(results).length;
+
+  // API
+  const key = apiKey();
+  const apiEl = document.getElementById('api-status');
+  if (!key)                                                    { apiEl.textContent = '—';           apiEl.style.color = 'var(--muted)'; }
+  else if (key.startsWith('sk') || key.startsWith('AQ.'))  { apiEl.textContent = '✓ Válida';    apiEl.style.color = 'var(--green)'; }
+  else                                                        { apiEl.textContent = '⚠ Verifique'; apiEl.style.color = 'var(--yellow)'; }
+
+  // Stats area
+  const statsArea = document.getElementById('stats-area');
+  statsArea.style.display = total > 0 ? '' : 'none';
+
+  // Tabs
+  document.getElementById('tab-files-count').textContent = total;
+  document.getElementById('tab-data-count').textContent  = resCount;
+
+  // spans
+  const pills = document.getElementById('stats-pills');
+  pills.innerHTML = [
+    done     ? `<span class="stat-pill done">✓ ${done} concluídos</span>`       : '',
+    errCount ? `<span class="stat-pill error">✕ ${errCount} erros</span>`        : '',
+    proc     ? `<span class="stat-pill proc">⟳ ${proc} processando</span>`       : '',
+    pending  ? `<span class="stat-pill pending">${pending} pendentes</span>`      : '',
+    `<span style="color:var(--muted);font-size:11px">/ ${total} total</span>`,
+  ].join('');
+
+  // progressos
+  document.getElementById('progress-fill').style.width = progress + '%';
+  const batchNum    = total > 0 ? Math.ceil((done + proc) / BATCH) : 0;
+  const totalBatch  = Math.ceil(total / BATCH);
+  document.getElementById('progress-label').textContent =
+    `${progress}% concluído` + (running && totalBatch > 0 ? ` · lote ${batchNum} de ${totalBatch}` : '');
+
+  // controles
+  const ctrl = document.getElementById('controls');
+  ctrl.innerHTML = '';
+  if (errCount > 0 && !running) ctrl.innerHTML += `<button class="btn btn-ghost" onclick="retryErrors()">↺ Tentar erros (${errCount})</button>`;
+  if (resCount > 0)              ctrl.innerHTML += `<button class="btn btn-success" onclick="exportExcel()">⬇ Exportar Excel (${resCount})</button>`;
+  if (running) {
+    ctrl.innerHTML += `<button class="btn btn-stop" onclick="stopFlag=true">⏹ Parar</button>`;
+  } else if (pending > 0 || errCount > 0) {
+    ctrl.innerHTML += `<button class="btn btn-primary" onclick="processFiles()">▶ Processar ${pending + errCount}</button>`;
+  }
+  if (!running && total > 0) ctrl.innerHTML += `<button class="btn btn-ghost" onclick="clearAll()" style="margin-left:auto">🗑 Limpar tudo</button>`;
+
+  // arquivos
+  const list = document.getElementById('file-list');
+  function createFileRow({ name, preview }) {
+  const row = document.createElement('div');
+  row.className = 'file-row';
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'file-name';
+  nameEl.textContent = name; // textContent é mais seguro q o inner
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'remove-btn';
+  removeBtn.textContent = '✕';
+  removeBtn.addEventListener('click', () => removeFile(name)); // closure segura
+
+  row.append(nameEl, removeBtn);
+  return row;
+}
+
+  // dados
+  const tbody = document.getElementById('data-tbody');
+  const tableEl = document.getElementById('data-table');
+  const emptyEl = document.getElementById('table-empty');
+  const rows = Object.values(results);
+  if (rows.length === 0) {
+    tableEl.style.display = 'none'; emptyEl.style.display = '';
+  } else {
+    tableEl.style.display = ''; emptyEl.style.display = 'none';
+    tbody.innerHTML = rows.map((r, i) => `
+      <tr>
+        <td style="color:var(--muted)">${i+1}</td>
+        <td style="color:var(--muted2);max-width:140px">${r.arquivo}</td>
+        ${FIELDS.map(([k]) => `<td class="editable" ondblclick="editCell(this,'${r.arquivo}','${k}')">${r[k]||'—'}</td>`).join('')}
+      </tr>`).join('');
+  }
+}
+
+// ── Inline edit ────────────────────────────────────────────────────
+function editCell(td, arquivo, field) {
+  const cur = results[arquivo]?.[field] || '';
+  td.innerHTML = `<input class="cell-input" value="${cur.replace(/"/g,'&quot;')}" onblur="commitCell(this,'${arquivo}','${field}')" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.blur();}">`;
+  td.querySelector('input').focus();
+}
+function commitCell(input, arquivo, field) {
+  if (results[arquivo]) results[arquivo][field] = input.value;
+  render();
+}
+
+// ── Events ─────────────────────────────────────────────────────────
+const drop = document.getElementById('drop-zone');
+drop.addEventListener('click', () => document.getElementById('file-input').click());
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag-over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag-over'); addFiles(e.dataTransfer.files); });
+document.getElementById('file-input').addEventListener('change', e => addFiles(e.target.files));
+document.getElementById('api-key').addEventListener('input', render);
+
+render();
+</script>
+</body>
+</html>
