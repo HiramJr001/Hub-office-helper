@@ -9,10 +9,13 @@
   font-src    https://fonts.gstatic.com;
   connect-src https://openrouter.ai;
   img-src     'self' blob: data:;
+  worker-src  'self' blob: https://cdnjs.cloudflare.com;
 ">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Inovare · Hub de Ferramentas</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth.js/1.6.0/mammoth.browser.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -70,7 +73,7 @@
   .sidebar {
     position: fixed;
     top: 0; left: 0; bottom: 0;
-    width: 240px;
+    width: 300px;
     background: var(--bg-soft);
     border-right: 1px solid var(--border);
     display: flex;
@@ -81,10 +84,18 @@
     transition: transform .3s cubic-bezier(.4,0,.2,1);
   }
 
+  .brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+  display: block;
+  }
+
   .brand { display: flex; align-items: center; gap: 12px; padding: 0 4px; }
   .brand-mark {
     width: 38px; height: 38px;
-    border-radius: 11px;
+    border-radius: 999px;
     background: var(--grad);
     display: flex; align-items: center; justify-content: center;
     font-family: var(--font-display);
@@ -409,6 +420,51 @@
   }
   #toast.show { opacity: 1; transform: translateY(0); }
 
+  /* ───────── Form card (E-mail / Resumo) ───────── */
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
+  .clean-options { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+  .clean-opt { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted2); cursor: pointer; user-select: none; }
+  .clean-opt input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+  .clean-case-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .clean-case-row .btn { padding: 7px 12px; font-size: 12px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 11px; font-weight: 700; color: var(--muted2); letter-spacing: .03em; }
+  .form-input, .form-select, .form-textarea {
+    background: var(--surface2); border: 1px solid var(--border-light); border-radius: 9px;
+    padding: 10px 12px; font-size: 13px; color: var(--text); font-family: var(--font); outline: none;
+    transition: border-color .15s, box-shadow .15s; width: 100%;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+  .form-input::placeholder, .form-textarea::placeholder { color: var(--muted); }
+  .form-textarea { resize: vertical; min-height: 110px; line-height: 1.55; font-family: var(--font); }
+  .form-select { cursor: pointer; appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239aa0b8'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 30px;
+  }
+
+  .divider-or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin: 18px 0; }
+  .divider-or::before, .divider-or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .dropzone {
+    border: 1.5px dashed var(--border-light); border-radius: var(--radius);
+    padding: 36px 24px; text-align: center; cursor: pointer; transition: all .2s;
+    background: transparent; position: relative;
+  }
+  .dropzone:hover, .dropzone.drag-over { border-color: var(--accent); background: var(--accent-dim); }
+  .dropzone .drop-icon { width: 44px; height: 44px; background: var(--surface2); border: 1px solid var(--border-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 19px; }
+  .dropzone .drop-title { font-size: 13.5px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .dropzone .drop-sub { font-size: 11.5px; color: var(--muted); }
+
+  .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-top: 18px; }
+  .result-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .result-title { font-size: 11px; font-weight: 700; color: var(--muted2); text-transform: uppercase; letter-spacing: .05em; }
+  .result-subject { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 10px; }
+  .result-body { white-space: pre-wrap; font-size: 13.5px; line-height: 1.65; color: var(--text); }
+  .result-body[contenteditable="true"] { outline: none; }
+  .result-body[contenteditable="true"]:focus { background: var(--surface2); border-radius: 8px; padding: 8px; margin: -8px; }
+
   /* ───────── Responsive ───────── */
   @media (max-width: 980px) {
     .bento { grid-template-columns: repeat(2, 1fr); }
@@ -447,7 +503,7 @@
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="brand">
-      <div class="brand-mark">IN</div>
+      <div class="brand-mark"><img src="https://i.imgur.com/XJEo61I.jpeg" alt="Inovare"></div>
       <div>
         <h3>Inovare</h3>
         <span>Contabilidade</span>
@@ -463,11 +519,14 @@
       <button class="nav-item" data-nav="extractor" onclick="goTo('extractor')">
         <span class="ico">🪪</span> Extrator de Documentos
       </button>
-      <button class="nav-item" onclick="comingSoon('Resumo de PDF')">
-        <span class="ico">📄</span> Resumo de PDF <span class="soon-tag">EM BREVE</span>
+      <button class="nav-item" data-nav="summary" onclick="goTo('summary')">
+        <span class="ico">📄</span> Resumo Geral
       </button>
-      <button class="nav-item" onclick="comingSoon('E-mail Profissional')">
-        <span class="ico">✉️</span> E-mail Profissional <span class="soon-tag">EM BREVE</span>
+      <button class="nav-item" data-nav="email" onclick="goTo('email')">
+        <span class="ico">✉️</span> E-mail Profissional
+      </button>
+      <button class="nav-item" data-nav="limpador" onclick="goTo('limpador')">
+        <span class="ico">🧹</span> Limpador de Texto
       </button>
       <button class="nav-item" onclick="comingSoon('Calculadora Trabalhista')">
         <span class="ico">🧮</span> Calc. Trabalhista <span class="soon-tag">EM BREVE</span>
@@ -497,7 +556,7 @@
   <div class="main">
     <div class="topbar">
       <div class="hamburger" onclick="openDrawer()"><span></span></div>
-      <div class="brand-mark" style="width:30px;height:30px;font-size:12px;">IN</div>
+      <div class="brand-mark"><img src="https://i.imgur.com/XJEo61I.jpeg" alt="Inovare"></div>
       <div>
         <h3 style="font-family:var(--font-display);font-size:13px;color:#fff;">Inovare</h3>
       </div>
@@ -526,20 +585,28 @@
             <span class="featured-cta">Abrir ferramenta <span class="arrow">→</span></span>
           </div>
 
-          <div class="tool-card locked" onclick="comingSoon('Resumo de PDF')">
-            <span class="status-corner soon">Em breve</span>
-            <div class="tool-icon soon">📄</div>
-            <h3>Resumo de PDF</h3>
-            <p>Faça upload de um PDF e receba um resumo claro e objetivo gerado por IA.</p>
-            <div class="tag-row"><span class="tag">IA</span><span class="tag">PDF</span></div>
+          <div class="tool-card" onclick="goTo('summary')">
+            <span class="status-corner live">Ativo</span>
+            <div class="tool-icon live">📄</div>
+            <h3>Resumo Geral</h3>
+            <p>Cole um texto ou envie um PDF, DOCX ou imagem e receba um resumo claro e objetivo gerado por IA.</p>
+            <div class="tag-row"><span class="tag tag-live">IA</span><span class="tag tag-live">TEXTO</span></div>
           </div>
 
-          <div class="tool-card locked" onclick="comingSoon('E-mail Profissional')">
-            <span class="status-corner soon">Em breve</span>
-            <div class="tool-icon soon">✉️</div>
+          <div class="tool-card" onclick="goTo('email')">
+            <span class="status-corner live">Ativo</span>
+            <div class="tool-icon live">✉️</div>
             <h3>E-mail Profissional</h3>
             <p>Gere e-mails formais prontos para enviar a partir de um contexto simples.</p>
-            <div class="tag-row"><span class="tag">IA</span><span class="tag">ESCRITA</span></div>
+            <div class="tag-row"><span class="tag tag-live">IA</span><span class="tag tag-live">ESCRITA</span></div>
+          </div>
+
+          <div class="tool-card" onclick="goTo('limpador')">
+            <span class="status-corner live">Ativo</span>
+            <div class="tool-icon live">🧹</div>
+            <h3>Limpador de Texto</h3>
+            <p>Remove espaços e linhas extras, corrige formatação de CPF/CNPJ e telefones, e converte maiúsculas/minúsculas em um clique.</p>
+            <div class="tag-row"><span class="tag tag-live">TEXTO</span><span class="tag tag-live">FORMATAÇÃO</span></div>
           </div>
 
           <div class="tool-card locked" onclick="comingSoon('Calculadora Trabalhista')">
@@ -587,9 +654,9 @@
         </div>
 
         <div class="api-section">
-          <label>API KEY</label>
-          <input type="password" id="api-key" placeholder="inserir API KEY..." autocomplete="off">
-          <span id="api-status" style="color:var(--muted)">—</span>
+          <label for="api-key">OpenRouter API Key</label>
+          <input type="password" id="api-key" placeholder="sk-or-v1-...">
+          <span id="api-status">—</span>
         </div>
 
         <div id="drop-zone">
@@ -623,6 +690,150 @@
             </table>
           </div>
         </div>
+
+      </div>
+    </section>
+
+    <!-- ───────── Resumo Geral view ───────── -->
+    <section class="view" id="view-summary">
+      <div class="tool-shell">
+
+        <div class="back-row">
+          <button class="back-btn" onclick="goTo('dashboard')">← Voltar</button>
+          <span class="crumb">Hub <b>/</b> Resumo Geral</span>
+        </div>
+
+        <div class="header">
+          <div class="header-badge" style="color:var(--green);border-color:rgba(46,230,166,.35);background:var(--green-dim)">IA · RESUMO</div>
+          <h1>Resumo Geral</h1>
+          <p>Cole um texto ou envie um arquivo (PDF, DOCX ou imagem) e receba um resumo claro e objetivo</p>
+        </div>
+
+        <div class="api-section">
+          <label for="api-key-summary">OpenRouter API Key</label>
+          <input type="password" id="api-key-summary" placeholder="sk-or-v1-...">
+          <span id="api-status-summary">—</span>
+        </div>
+
+        <div class="form-card">
+          <div class="form-group full">
+            <label class="form-label" for="summary-text">Cole o texto aqui</label>
+            <textarea class="form-textarea" id="summary-text" placeholder="Cole aqui o texto que deseja resumir..." oninput="onSummaryTextInput()"></textarea>
+          </div>
+
+          <div class="divider-or">ou envie um arquivo</div>
+
+          <div id="summary-dropzone" class="dropzone">
+            <div class="drop-icon">📎</div>
+            <div class="drop-title">Arraste um arquivo aqui ou clique para selecionar</div>
+            <div class="drop-sub">PDF, DOCX, JPG, PNG, WEBP · até 10MB</div>
+            <input type="file" id="summary-file-input" accept=".pdf,.docx,.png,.jpg,.jpeg,.webp,.bmp" style="display:none">
+          </div>
+
+          <div id="summary-file-chip" style="display:none;margin-top:10px"></div>
+
+          <button class="btn btn-success" id="summary-generate-btn" style="margin-top:18px" onclick="generateSummary()">📄 Gerar Resumo</button>
+        </div>
+
+        <div id="summary-result" style="display:none"></div>
+
+      </div>
+    </section>
+
+    <!-- ───────── E-mail Profissional view ───────── -->
+    <section class="view" id="view-email">
+      <div class="tool-shell">
+
+        <div class="back-row">
+          <button class="back-btn" onclick="goTo('dashboard')">← Voltar</button>
+          <span class="crumb">Hub <b>/</b> E-mail Profissional</span>
+        </div>
+
+        <div class="header">
+          <div class="header-badge">IA · E-MAIL</div>
+          <h1>E-mail Profissional</h1>
+          <p>Descreva o que precisa comunicar e a IA redige o e-mail para você</p>
+        </div>
+
+        <div class="api-section">
+          <label for="api-key-email">OpenRouter API Key</label>
+          <input type="password" id="api-key-email" placeholder="sk-or-v1-...">
+          <span id="api-status-email">—</span>
+        </div>
+
+        <div class="form-card">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="email-dest">Destinatário (opcional)</label>
+              <input type="text" class="form-input" id="email-dest" placeholder="Ex: Sr. João da Silva">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="email-assunto">Assunto (opcional)</label>
+              <input type="text" class="form-input" id="email-assunto" placeholder="Ex: Entrega da declaração de IR">
+            </div>
+            <div class="form-group full">
+              <label class="form-label" for="email-tom">Tom do e-mail</label>
+              <select class="form-select" id="email-tom">
+                <option value="Formal">Formal</option>
+                <option value="Neutro">Neutro</option>
+                <option value="Amigável">Amigável</option>
+                <option value="Urgente">Urgente</option>
+              </select>
+            </div>
+            <div class="form-group full">
+              <label class="form-label" for="email-contexto">Contexto / O que você quer comunicar *</label>
+              <textarea class="form-textarea" id="email-contexto" placeholder="Ex: Informar ao cliente que a declaração de imposto de renda foi finalizada e está disponível para revisão. Mencionar que o prazo é até dia 31 deste mês."></textarea>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="email-generate-btn" onclick="generateEmail()">📤 Gerar E-mail</button>
+        </div>
+
+        <div id="email-result" style="display:none"></div>
+
+      </div>
+    </section>
+
+    <!-- ───────── Limpador de Texto view ───────── -->
+    <section class="view" id="view-limpador">
+      <div class="tool-shell">
+
+        <div class="back-row">
+          <button class="back-btn" onclick="goTo('dashboard')">← Voltar</button>
+          <span class="crumb">Hub <b>/</b> Limpador de Texto</span>
+        </div>
+
+        <div class="header">
+          <div class="header-badge" style="color:var(--yellow);border-color:rgba(255,180,84,.35);background:var(--yellow-dim)">SEM IA · INSTANTÂNEO</div>
+          <h1>Limpador de Texto</h1>
+          <p>Cole o texto, marque as opções desejadas e limpe tudo na hora — sem precisar de API key</p>
+        </div>
+
+        <div class="form-card">
+          <div class="form-group full">
+            <label class="form-label" for="clean-input">Texto original</label>
+            <textarea class="form-textarea" id="clean-input" style="min-height:160px" placeholder="Cole aqui o texto que deseja limpar..." oninput="autoCleanPreview()"></textarea>
+          </div>
+
+          <div class="clean-options" id="clean-options">
+            <label class="clean-opt"><input type="checkbox" id="opt-trim" checked> Remover espaços extras</label>
+            <label class="clean-opt"><input type="checkbox" id="opt-blank" checked> Remover linhas vazias</label>
+            <label class="clean-opt"><input type="checkbox" id="opt-cpf"> Corrigir CPF (000.000.000-00)</label>
+            <label class="clean-opt"><input type="checkbox" id="opt-cnpj"> Corrigir CNPJ (00.000.000/0000-00)</label>
+            <label class="clean-opt"><input type="checkbox" id="opt-phone"> Padronizar telefones</label>
+          </div>
+
+          <div class="clean-case-row">
+            <span class="form-label" style="margin:0">Conversor de caixa:</span>
+            <button class="btn btn-ghost" onclick="applyCase('upper')">MAIÚSCULAS</button>
+            <button class="btn btn-ghost" onclick="applyCase('lower')">minúsculas</button>
+            <button class="btn btn-ghost" onclick="applyCase('title')">Cada Palavra</button>
+            <button class="btn btn-ghost" onclick="applyCase('sentence')">Primeira maiúscula</button>
+          </div>
+
+          <button class="btn btn-primary" style="margin-top:18px" onclick="cleanText()">🧹 Limpar Texto</button>
+        </div>
+
+        <div id="clean-result" style="display:none"></div>
 
       </div>
     </section>
@@ -697,6 +908,16 @@ function mediaType(file) {
 }
 
 function apiKey() { return document.getElementById('api-key').value.trim(); }
+
+function initApiKeyField() {
+  const input = document.getElementById('api-key');
+  const saved = localStorage.getItem('or_api_key');
+  if (saved) input.value = saved;
+  input.addEventListener('input', () => {
+    localStorage.setItem('or_api_key', input.value.trim());
+    render();
+  });
+}
 
 async function extractDocument(b64, mt, filename) {
   const key = apiKey();
@@ -1018,9 +1239,363 @@ drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add(
 drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
 drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag-over'); addFiles(e.dataTransfer.files); });
 document.getElementById('file-input').addEventListener('change', e => addFiles(e.target.files));
-document.getElementById('api-key').addEventListener('input', render);
+initApiKeyField();
+
+// ── Shared OpenRouter helper ─────────────────────────────────────────────
+const OR_MODEL = "qwen/qwen3-vl-32b-instruct";
+
+function getApiKey(inputId) {
+  const input = document.getElementById(inputId);
+  const val = input ? input.value.trim() : '';
+  if (val) { localStorage.setItem('or_api_key', val); return val; }
+  return localStorage.getItem('or_api_key') || '';
+}
+
+function initApiKeyFieldGeneric(inputId, statusId) {
+  const input = document.getElementById(inputId);
+  const statusEl = document.getElementById(statusId);
+  const saved = localStorage.getItem('or_api_key');
+  if (saved) input.value = saved;
+  const update = () => {
+    const key = input.value.trim();
+    if (key) localStorage.setItem('or_api_key', key);
+    if (!key)                                                { statusEl.textContent = '—';           statusEl.style.color = 'var(--muted)'; }
+    else if (key.startsWith('sk') || key.startsWith('AQ.'))  { statusEl.textContent = '✓ Válida';    statusEl.style.color = 'var(--green)'; }
+    else                                                       { statusEl.textContent = '⚠ Verifique'; statusEl.style.color = 'var(--yellow)'; }
+  };
+  input.addEventListener('input', update);
+  update();
+}
+initApiKeyFieldGeneric('api-key-summary', 'api-status-summary');
+initApiKeyFieldGeneric('api-key-email', 'api-status-email');
+
+async function callOpenRouterText(key, prompt) {
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: 'POST',
+    headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json", "HTTP-Referer": window.location.origin, "X-Title": "Hub de Ferramentas" },
+    body: JSON.stringify({
+      model: OR_MODEL, max_tokens: 2000, temperature: 0.4,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.error?.message || `HTTP ${res.status}`); }
+  const data = await res.json();
+  return (data.choices?.[0]?.message?.content || '').trim();
+}
+
+async function callOpenRouterImage(key, b64, mt, prompt) {
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: 'POST',
+    headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json", "HTTP-Referer": window.location.origin, "X-Title": "Hub de Ferramentas" },
+    body: JSON.stringify({
+      model: OR_MODEL, max_tokens: 2000, temperature: 0.4,
+      messages: [{ role: "user", content: [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: `data:${mt};base64,${b64}` } }
+      ] }]
+    })
+  });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.error?.message || `HTTP ${res.status}`); }
+  const data = await res.json();
+  return (data.choices?.[0]?.message?.content || '').trim();
+}
+
+function copyToClipboard(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const old = btn.textContent;
+    btn.textContent = '✓ Copiado!';
+    setTimeout(() => { btn.textContent = old; }, 1800);
+  }).catch(() => toast('Não foi possível copiar'));
+}
+
+// ── E-mail Profissional ───────────────────────────────────────────────
+async function generateEmail() {
+  const key = getApiKey('api-key-email');
+  if (!key) { toast('⚠️ Insira a API Key antes de gerar'); return; }
+  const dest = document.getElementById('email-dest').value.trim();
+  const assuntoInput = document.getElementById('email-assunto').value.trim();
+  const tom = document.getElementById('email-tom').value;
+  const contexto = document.getElementById('email-contexto').value.trim();
+  if (!contexto) { toast('⚠️ Descreva o que você quer comunicar'); return; }
+
+  const btn = document.getElementById('email-generate-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin">⟳</span> Gerando<span class="loading-dots"></span>';
+
+  const prompt = `Você é um assistente que redige e-mails profissionais em português do Brasil.
+
+Dados:
+- Destinatário: ${dest || '(não informado, use saudação genérica apropriada)'}
+- Assunto sugerido: ${assuntoInput || '(crie um assunto curto e claro a partir do contexto)'}
+- Tom desejado: ${tom}
+- Contexto / o que precisa ser comunicado: ${contexto}
+
+Redija um e-mail completo, bem estruturado, com saudação, corpo claro e objetivo, e despedida profissional adequada ao tom pedido. Não invente informações que não foram fornecidas.
+
+Retorne SOMENTE um objeto JSON puro, sem markdown, sem texto explicativo, no formato:
+{ "assunto": "string", "corpo": "string com o corpo do e-mail, incluindo saudação e despedida, usando \\n para quebras de linha" }`;
+
+  try {
+    const raw = await callOpenRouterText(key, prompt);
+    const clean = raw.replace(/```json?|```/g, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(clean); }
+    catch { const m = clean.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); else throw new Error('Resposta inválida da API'); }
+
+    const resultEl = document.getElementById('email-result');
+    const fullText = `Assunto: ${parsed.assunto}\n\n${parsed.corpo}`;
+    resultEl.style.display = '';
+    resultEl.innerHTML = `
+      <div class="result-card">
+        <div class="result-head">
+          <span class="result-title">E-mail gerado</span>
+          <button class="btn btn-ghost" id="email-copy-btn">⧉ Copiar</button>
+        </div>
+        <div class="result-subject">Assunto: ${parsed.assunto}</div>
+        <div class="result-body" id="email-body-text" contenteditable="true">${parsed.corpo}</div>
+      </div>`;
+    document.getElementById('email-copy-btn').addEventListener('click', (e) => {
+      const corpo = document.getElementById('email-body-text').innerText;
+      copyToClipboard(`Assunto: ${parsed.assunto}\n\n${corpo}`, e.target);
+    });
+    toast('✅ E-mail gerado com sucesso');
+  } catch (e) {
+    toast('❌ ' + e.message);
+  } finally {
+    btn.disabled = false; btn.innerHTML = '📤 Gerar E-mail';
+  }
+}
+
+// ── Resumo Geral ─────────────────────────────────────────────────────
+let summaryFile = null;
+
+function onSummaryTextInput() {
+  const text = document.getElementById('summary-text').value;
+  if (text.trim() && summaryFile) clearSummaryFile();
+}
+
+function summaryFileKind(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'pdf') return 'pdf';
+  if (ext === 'docx') return 'docx';
+  if (['jpg','jpeg','png','webp','bmp'].includes(ext) || file.type.startsWith('image/')) return 'image';
+  return null;
+}
+
+function setSummaryFile(file) {
+  const kind = summaryFileKind(file);
+  if (!kind) { toast('⚠️ Formato não suportado'); return; }
+  summaryFile = { file, kind };
+  document.getElementById('summary-text').value = '';
+  const chip = document.getElementById('summary-file-chip');
+  chip.style.display = '';
+  const icon = { pdf: '📕', docx: '📘', image: '🖼️' }[kind];
+  chip.innerHTML = `
+    <div class="file-row">
+      <div class="file-icon" style="font-size:15px">${icon}</div>
+      <div class="file-info"><div class="file-name">${file.name}</div></div>
+      <button class="remove-btn" onclick="clearSummaryFile()">✕</button>
+    </div>`;
+}
+
+function clearSummaryFile() {
+  summaryFile = null;
+  document.getElementById('summary-file-chip').style.display = 'none';
+  document.getElementById('summary-file-chip').innerHTML = '';
+  document.getElementById('summary-file-input').value = '';
+}
+
+async function extractPdfText(file) {
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(it => it.str).join(' ') + '\n';
+  }
+  return text.trim();
+}
+
+async function extractDocxText(file) {
+  const buf = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer: buf });
+  return (result.value || '').trim();
+}
+
+function renderSummaryResult(text) {
+  const resultEl = document.getElementById('summary-result');
+  resultEl.style.display = '';
+  resultEl.innerHTML = `
+    <div class="result-card">
+      <div class="result-head">
+        <span class="result-title">Resumo</span>
+        <button class="btn btn-ghost" id="summary-copy-btn">⧉ Copiar</button>
+      </div>
+      <div class="result-body" id="summary-body-text" contenteditable="true">${text}</div>
+    </div>`;
+  document.getElementById('summary-copy-btn').addEventListener('click', (e) => {
+    copyToClipboard(document.getElementById('summary-body-text').innerText, e.target);
+  });
+}
+
+async function generateSummary() {
+  const key = getApiKey('api-key-summary');
+  if (!key) { toast('⚠️ Insira a API Key antes de gerar'); return; }
+
+  const pastedText = document.getElementById('summary-text').value.trim();
+  if (!summaryFile && !pastedText) { toast('⚠️ Cole um texto ou selecione um arquivo'); return; }
+
+  const btn = document.getElementById('summary-generate-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin">⟳</span> Gerando<span class="loading-dots"></span>';
+
+  const textPrompt = (content) => `Resuma o texto abaixo de forma clara, objetiva e bem estruturada, em português do Brasil. Destaque os pontos principais (use tópicos quando fizer sentido) e mantenha um parágrafo final com a conclusão geral. Não invente informações que não estejam no texto.\n\nTexto:\n"""\n${content.slice(0, 14000)}\n"""`;
+  const imagePrompt = `Analise a imagem e produza um resumo claro, objetivo e bem estruturado do conteúdo, em português do Brasil. Destaque os pontos principais. Não invente informações que não estejam visíveis na imagem.`;
+
+  try {
+    let summary;
+    if (summaryFile) {
+      if (summaryFile.kind === 'image') {
+        const b64 = await fileToBase64(summaryFile.file);
+        summary = await callOpenRouterImage(key, b64, mediaType(summaryFile.file), imagePrompt);
+      } else {
+        const extracted = summaryFile.kind === 'pdf' ? await extractPdfText(summaryFile.file) : await extractDocxText(summaryFile.file);
+        if (!extracted || extracted.length < 10) throw new Error('Não foi possível extrair texto do arquivo');
+        summary = await callOpenRouterText(key, textPrompt(extracted));
+      }
+    } else {
+      summary = await callOpenRouterText(key, textPrompt(pastedText));
+    }
+    renderSummaryResult(summary);
+    toast('✅ Resumo gerado com sucesso');
+  } catch (e) {
+    toast('❌ ' + e.message);
+  } finally {
+    btn.disabled = false; btn.innerHTML = '📄 Gerar Resumo';
+  }
+}
+
+const summaryDrop = document.getElementById('summary-dropzone');
+const summaryFileInput = document.getElementById('summary-file-input');
+summaryDrop.addEventListener('click', () => summaryFileInput.click());
+summaryDrop.addEventListener('dragover', e => { e.preventDefault(); summaryDrop.classList.add('drag-over'); });
+summaryDrop.addEventListener('dragleave', () => summaryDrop.classList.remove('drag-over'));
+summaryDrop.addEventListener('drop', e => {
+  e.preventDefault(); summaryDrop.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) setSummaryFile(e.dataTransfer.files[0]);
+});
+summaryFileInput.addEventListener('change', e => { if (e.target.files[0]) setSummaryFile(e.target.files[0]); });
+
+// ── Limpador de Texto ──────────────────────────────────────────────────
+function onlyDigits(s) { return (s || '').replace(/\D/g, ''); }
+
+function formatCPF(d) {
+  if (d.length !== 11) return null;
+  return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+function formatCNPJ(d) {
+  if (d.length !== 14) return null;
+  return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+}
+
+function formatPhone(d) {
+  if (d.length === 11) return d.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  if (d.length === 10) return d.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  return null;
+}
+
+function fixDocsAndPhones(text, { cpf, cnpj, phone }) {
+  if (!cpf && !cnpj && !phone) return text;
+  return text.replace(/\b\d[\d.\-\/\s]{9,17}\d\b/g, (match) => {
+    const digits = onlyDigits(match);
+    if (cpf && digits.length === 11) { const f = formatCPF(digits); if (f) return f; }
+    if (cnpj && digits.length === 14) { const f = formatCNPJ(digits); if (f) return f; }
+    if (phone && (digits.length === 10 || digits.length === 11)) { const f = formatPhone(digits); if (f) return f; }
+    return match;
+  });
+}
+
+function cleanText() {
+  const input = document.getElementById('clean-input').value;
+  if (!input.trim()) { toast('⚠️ Cole um texto para limpar'); return; }
+
+  const opts = {
+    trim: document.getElementById('opt-trim').checked,
+    blank: document.getElementById('opt-blank').checked,
+    cpf: document.getElementById('opt-cpf').checked,
+    cnpj: document.getElementById('opt-cnpj').checked,
+    phone: document.getElementById('opt-phone').checked,
+  };
+
+  let lines = input.split('\n');
+
+  if (opts.trim) {
+    lines = lines.map(l => l.replace(/[ \t]+/g, ' ').trim());
+  }
+  if (opts.blank) {
+    lines = lines.filter(l => l.trim() !== '');
+  }
+
+  let result = lines.join('\n');
+  result = fixDocsAndPhones(result, opts);
+
+  renderCleanResult(result);
+  toast('✅ Texto limpo com sucesso');
+}
+
+function toTitleCase(text) {
+  const lower = ['de','da','do','das','dos','e','a','o','as','os','em','na','no'];
+  return text.toLowerCase().replace(/\S+/g, (word, idx) => {
+    if (idx > 0 && lower.includes(word)) return word;
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  });
+}
+
+function toSentenceCase(text) {
+  const lower = text.toLowerCase();
+  return lower.replace(/(^\s*\w|[.!?]\s+\w)/g, c => c.toUpperCase());
+}
+
+function applyCase(mode) {
+  const el = document.getElementById('clean-input');
+  const text = el.value;
+  if (!text.trim()) { toast('⚠️ Cole um texto primeiro'); return; }
+  let out;
+  if (mode === 'upper') out = text.toUpperCase();
+  else if (mode === 'lower') out = text.toLowerCase();
+  else if (mode === 'title') out = toTitleCase(text);
+  else out = toSentenceCase(text);
+  el.value = out;
+  renderCleanResult(out);
+}
+
+function autoCleanPreview() {
+  const resultEl = document.getElementById('clean-result');
+  if (resultEl.style.display !== 'none') resultEl.style.display = 'none';
+}
+
+function renderCleanResult(text) {
+  const resultEl = document.getElementById('clean-result');
+  resultEl.style.display = '';
+  resultEl.innerHTML = `
+    <div class="result-card">
+      <div class="result-head">
+        <span class="result-title">Resultado</span>
+        <button class="btn btn-ghost" id="clean-copy-btn">⧉ Copiar</button>
+      </div>
+      <div class="result-body" id="clean-body-text" contenteditable="true">${text}</div>
+    </div>`;
+  document.getElementById('clean-copy-btn').addEventListener('click', (e) => {
+    copyToClipboard(document.getElementById('clean-body-text').innerText, e.target);
+  });
+}
+
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
 
 render();
+
 </script>
 </body>
 </html>
