@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head> 
+<head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
@@ -10,497 +10,661 @@
   connect-src https://openrouter.ai;
   img-src     'self' blob: data:;
 ">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Extrator de RG</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Inovare · Hub de Ferramentas</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
   :root {
-    --bg: #0f1117;
-    --surface: #181c27;
-    --surface2: #1e2333;
-    --border: #2a3050;
-    --border-light: #323a5a;
-    --accent: #4f7cff;
-    --accent-dim: rgba(79,124,255,0.12);
-    --accent-glow: rgba(79,124,255,0.25);
-    --green: #22c55e;
-    --green-dim: rgba(34,197,94,0.12);
-    --red: #f43f5e;
-    --red-dim: rgba(244,63,94,0.12);
-    --yellow: #f59e0b;
-    --yellow-dim: rgba(245,158,11,0.12);
-    --text: #e2e8f0;
-    --muted: #64748b;
-    --muted2: #94a3b8;
-    --radius: 10px;
+    --bg: #08090e;
+    --bg-soft: #0c0e16;
+    --surface: #12141f;
+    --surface2: #181b2a;
+    --surface3: #1f2335;
+    --border: #232639;
+    --border-light: #2d3149;
+    --accent: #6c63ff;
+    --accent2: #22d3ee;
+    --accent-dim: rgba(108,99,255,0.14);
+    --accent-glow: rgba(108,99,255,0.35);
+    --grad: linear-gradient(135deg, #6c63ff 0%, #9b5cf6 55%, #22d3ee 130%);
+    --green: #2ee6a6;
+    --green-dim: rgba(46,230,166,0.12);
+    --red: #ff5c7a;
+    --red-dim: rgba(255,92,122,0.12);
+    --yellow: #ffb454;
+    --yellow-dim: rgba(255,180,84,0.12);
+    --text: #eef0f8;
+    --muted: #6b7186;
+    --muted2: #9aa0b8;
+    --radius: 14px;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
     --font: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
+  html { scroll-behavior: smooth; }
 
   body {
     background: var(--bg);
     color: var(--text);
     font-family: var(--font);
     min-height: 100vh;
-    padding: 0;
     font-size: 14px;
     line-height: 1.5;
+    overflow-x: hidden;
   }
 
-  /* ── Layout ── */
-  .shell {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 32px 24px 80px;
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
   }
 
-  /* ── Header ── */
-  .header {
-    margin-bottom: 28px;
+  ::selection { background: var(--accent-glow); color: #fff; }
+
+  /* ───────── App shell ───────── */
+  .app { display: flex; min-height: 100vh; }
+
+  /* ───────── Sidebar (desktop) ───────── */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 240px;
+    background: var(--bg-soft);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 22px 16px;
+    gap: 28px;
+    z-index: 40;
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
   }
-  .header-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--accent-dim);
-    color: var(--accent);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    padding: 4px 10px;
-    border-radius: 999px;
-    margin-bottom: 12px;
-    border: 1px solid var(--accent-glow);
-  }
-  .header h1 {
-    font-size: 22px;
-    font-weight: 600;
+
+  .brand { display: flex; align-items: center; gap: 12px; padding: 0 4px; }
+  .brand-mark {
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    background: var(--grad);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
     color: #fff;
-    margin-bottom: 4px;
-    letter-spacing: -0.3px;
+    font-size: 15px;
+    box-shadow: 0 4px 18px var(--accent-glow);
+    flex-shrink: 0;
   }
-  .header p {
+  .brand h3 { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: #fff; letter-spacing: -.2px; }
+  .brand span { font-size: 11px; color: var(--muted2); }
+
+  .sidebar nav { display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; }
+  .nav-section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); padding: 14px 10px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px;
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 10px;
     color: var(--muted2);
-    font-size: 13px;
+    text-decoration: none;
+    font-size: 13px; font-weight: 500;
+    background: none; border: none; font-family: var(--font);
+    cursor: pointer;
+    text-align: left;
+    position: relative;
+    transition: background .15s, color .15s;
+  }
+  .nav-item .ico { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; opacity: .9; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-dim); color: #fff; }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: -16px; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 16px; border-radius: 3px; background: var(--grad);
+  }
+  .nav-item .soon-tag {
+    margin-left: auto; font-size: 9px; font-weight: 700; letter-spacing: .04em;
+    color: var(--muted); background: var(--surface3); padding: 2px 6px; border-radius: 999px;
   }
 
-  /* ── API Key ── */
-  .api-section {
+  .sidebar-foot { border-top: 1px solid var(--border); padding-top: 14px; }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; }
+  .user-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg,#374151,#1f2335);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: var(--text);
+    border: 1px solid var(--border-light);
+  }
+  .user-chip .name { font-size: 12px; font-weight: 600; color: var(--text); }
+  .user-chip .role { font-size: 10px; color: var(--muted); }
+
+  .sidebar-overlay { display: none; }
+
+  /* ───────── Mobile topbar ───────── */
+  .topbar {
+    display: none;
+    position: sticky; top: 0; z-index: 30;
+    align-items: center; gap: 12px;
+    padding: 14px 16px;
+    background: rgba(8,9,14,0.85);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .hamburger {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: var(--surface2); border: 1px solid var(--border-light);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text); flex-shrink: 0;
+  }
+  .hamburger span { display: block; width: 14px; height: 1.5px; background: currentColor; position: relative; }
+  .hamburger span::before, .hamburger span::after { content:''; position:absolute; left:0; width:14px; height:1.5px; background:currentColor; }
+  .hamburger span::before { top: -4px; } .hamburger span::after { top: 4px; }
+
+  /* ───────── Main ───────── */
+  .main { flex: 1; margin-left: 240px; min-height: 100vh; position: relative; }
+
+  .view { display: none; animation: viewIn .45s cubic-bezier(.16,1,.3,1); }
+  .view.active { display: block; }
+  @keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ───────── Dashboard ───────── */
+  .dash-shell { max-width: 1080px; margin: 0 auto; padding: 48px 32px 80px; position: relative; }
+
+  .mesh {
+    position: absolute; top: -120px; right: -120px; width: 520px; height: 520px;
+    background: radial-gradient(circle at 30% 30%, rgba(108,99,255,.22), transparent 60%),
+                radial-gradient(circle at 70% 70%, rgba(34,211,238,.16), transparent 55%);
+    filter: blur(10px);
+    pointer-events: none;
+    z-index: 0;
+    animation: meshFloat 14s ease-in-out infinite;
+  }
+  @keyframes meshFloat {
+    0%,100% { transform: translate(0,0) scale(1); }
+    50% { transform: translate(-30px, 20px) scale(1.08); }
+  }
+
+  .dash-header { position: relative; z-index: 1; margin-bottom: 36px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--accent-dim); color: var(--accent2);
+    font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    padding: 6px 12px; border-radius: 999px; margin-bottom: 16px;
+    border: 1px solid rgba(108,99,255,.3);
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(46,230,166,.6); animation: ping 2s infinite; }
+  @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(46,230,166,.5); } 70% { box-shadow: 0 0 0 7px rgba(46,230,166,0); } 100% { box-shadow: 0 0 0 0 rgba(46,230,166,0); } }
+
+  .dash-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 4vw, 38px);
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -.6px;
+    margin-bottom: 10px;
+  }
+  .dash-header h1 .wave { display: inline-block; animation: wave 2.2s ease-in-out infinite; transform-origin: 70% 70%; }
+  @keyframes wave { 0%,100% { transform: rotate(0); } 15% { transform: rotate(16deg); } 30% { transform: rotate(-8deg); } 45% { transform: rotate(14deg); } 60% { transform: rotate(0); } }
+  .dash-header p { color: var(--muted2); font-size: 14.5px; max-width: 480px; }
+
+  /* Bento grid */
+  .bento {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .tool-card {
+    grid-column: span 1;
+    position: relative;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 16px 18px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    padding: 22px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color .25s, transform .25s, box-shadow .25s;
+    display: flex; flex-direction: column;
   }
-  .api-section label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted2);
-    white-space: nowrap;
-    letter-spacing: .04em;
-    text-transform: uppercase;
+  .tool-card.featured { grid-column: span 2; }
+  .tool-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(360px circle at var(--mx,50%) var(--my,0%), rgba(108,99,255,.13), transparent 55%);
+    opacity: 0; transition: opacity .3s;
+    pointer-events: none;
   }
-  .api-section input {
-    flex: 1;
-    background: var(--surface2);
+  .tool-card:hover::before { opacity: 1; }
+  .tool-card:hover { border-color: var(--border-light); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,0,0,.35); }
+  .tool-card:active { transform: translateY(-1px) scale(.99); }
+  .tool-card.locked { cursor: default; }
+  .tool-card.locked:hover { transform: none; box-shadow: none; }
+
+  .tool-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; margin-bottom: 16px;
     border: 1px solid var(--border-light);
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 13px;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    color: var(--text);
-    outline: none;
-    transition: border-color .15s;
+    flex-shrink: 0;
   }
-  .api-section input:focus { border-color: var(--accent); }
-  .api-section input::placeholder { color: var(--muted); }
-  #api-status {
-    font-size: 11px;
-    white-space: nowrap;
-    font-weight: 500;
+  .tool-icon.live { background: var(--accent-dim); }
+  .tool-icon.soon { background: var(--surface2); filter: grayscale(.4); opacity: .85; }
+
+  .tool-card h3 { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 6px; letter-spacing: -.2px; }
+  .tool-card p { color: var(--muted2); font-size: 12.5px; line-height: 1.55; flex: 1; }
+
+  .tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
+  .tag { font-size: 10px; font-weight: 700; letter-spacing: .03em; padding: 3px 8px; border-radius: 999px; background: var(--surface3); color: var(--muted2); }
+  .tag.tag-live { background: var(--green-dim); color: var(--green); }
+
+  .status-corner {
+    position: absolute; top: 16px; right: 16px;
+    font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .status-corner.live { background: var(--green-dim); color: var(--green); }
+  .status-corner.soon { background: var(--surface3); color: var(--muted); }
+
+  .featured-cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 16px; font-size: 12px; font-weight: 600; color: var(--accent2);
+  }
+  .featured-cta .arrow { transition: transform .2s; }
+  .tool-card.featured:hover .featured-cta .arrow { transform: translateX(4px); }
+
+  .dash-foot {
+    position: relative; z-index: 1;
+    margin-top: 40px;
+    display: flex; align-items: center; gap: 8px;
+    color: var(--muted); font-size: 12px;
+    padding-top: 22px; border-top: 1px solid var(--border);
   }
 
-  /* ── Drop zone ── */
+  /* ───────── Tool view (extractor) ───────── */
+  .tool-shell { max-width: 980px; margin: 0 auto; padding: 28px 32px 80px; }
+  .back-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface2); border: 1px solid var(--border-light);
+    color: var(--muted2); font-size: 12px; font-weight: 600;
+    padding: 7px 12px; border-radius: 9px; cursor: pointer; font-family: var(--font);
+    transition: background .15s, color .15s;
+  }
+  .back-btn:hover { background: var(--surface3); color: #fff; }
+  .crumb { font-size: 12px; color: var(--muted); }
+  .crumb b { color: var(--muted2); }
+
+  .header { margin-bottom: 26px; }
+  .header-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--accent-dim); color: var(--accent2);
+    font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 999px; margin-bottom: 12px;
+    border: 1px solid var(--accent-glow);
+  }
+  .header h1 { font-family: var(--font-display); font-size: 23px; font-weight: 700; color: #fff; margin-bottom: 4px; letter-spacing: -.4px; }
+  .header p { color: var(--muted2); font-size: 13px; }
+
+  .api-section {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .api-section label { font-size: 11px; font-weight: 700; color: var(--muted2); white-space: nowrap; letter-spacing: .05em; text-transform: uppercase; }
+  .api-section input {
+    flex: 1; min-width: 160px; background: var(--surface2); border: 1px solid var(--border-light); border-radius: 9px;
+    padding: 9px 12px; font-size: 13px; font-family: 'SF Mono', 'Fira Code', monospace; color: var(--text); outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .api-section input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+  .api-section input::placeholder { color: var(--muted); }
+  #api-status { font-size: 11px; white-space: nowrap; font-weight: 600; }
+
   #drop-zone {
-    border: 1.5px dashed var(--border-light);
-    border-radius: 14px;
-    padding: 44px 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: all .2s;
-    margin-bottom: 18px;
-    background: transparent;
-    position: relative;
+    border: 1.5px dashed var(--border-light); border-radius: var(--radius);
+    padding: 44px 24px; text-align: center; cursor: pointer; transition: all .2s;
+    margin-bottom: 18px; background: transparent; position: relative;
   }
-  #drop-zone.drag-over {
-    border-color: var(--accent);
-    background: var(--accent-dim);
-  }
+  #drop-zone:hover { border-color: var(--accent); background: var(--accent-dim); }
+  #drop-zone.drag-over { border-color: var(--accent); background: var(--accent-dim); transform: scale(1.01); }
   #drop-zone .drop-icon {
-    width: 44px;
-    height: 44px;
-    background: var(--surface2);
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 14px;
-    font-size: 20px;
+    width: 46px; height: 46px; background: var(--surface2); border: 1px solid var(--border-light);
+    border-radius: 13px; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 21px;
   }
-  #drop-zone .drop-title {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-    margin-bottom: 4px;
-  }
-  #drop-zone .drop-sub {
-    font-size: 12px;
-    color: var(--muted);
-  }
+  #drop-zone .drop-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  #drop-zone .drop-sub { font-size: 12px; color: var(--muted); }
   #file-input { display: none; }
 
-  /* ── Stats bar ── */
-  .stats-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-  .stat-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-  .stat-pill.done    { background: var(--green-dim); color: var(--green); }
-  .stat-pill.error   { background: var(--red-dim);   color: var(--red);   }
-  .stat-pill.proc    { background: var(--accent-dim); color: var(--accent);}
-  .stat-pill.pending { background: var(--surface2);  color: var(--muted2);}
+  .stats-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .stat-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .stat-pill.done { background: var(--green-dim); color: var(--green); }
+  .stat-pill.error { background: var(--red-dim); color: var(--red); }
+  .stat-pill.proc { background: var(--accent-dim); color: var(--accent2); }
+  .stat-pill.pending { background: var(--surface2); color: var(--muted2); }
   .stats-bar .spacer { flex: 1; }
 
-  /* ── Progress ── */
-  .progress-wrap {
-    margin-bottom: 16px;
-  }
-  .progress-track {
-    height: 4px;
-    background: var(--surface2);
-    border-radius: 999px;
-    overflow: hidden;
-    margin-bottom: 6px;
-  }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), #7c5cfc);
-    border-radius: 999px;
-    transition: width .4s ease;
-  }
-  .progress-label {
-    font-size: 11px;
-    color: var(--muted);
-  }
+  .progress-wrap { margin-bottom: 16px; }
+  .progress-track { height: 4px; background: var(--surface2); border-radius: 999px; overflow: hidden; margin-bottom: 6px; }
+  .progress-fill { height: 100%; background: var(--grad); border-radius: 999px; transition: width .4s ease; }
+  .progress-label { font-size: 11px; color: var(--muted); }
 
-  /* ── Buttons ── */
   .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    font-family: var(--font);
-    transition: opacity .15s, transform .1s;
-    white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 9px;
+    font-size: 12px; font-weight: 700; cursor: pointer; border: none; font-family: var(--font);
+    transition: opacity .15s, transform .1s, box-shadow .15s; white-space: nowrap;
   }
-  .btn:hover { opacity: .85; }
-  .btn:active { transform: scale(.97); }
-  .btn-primary  { background: var(--accent); color: #fff; }
-  .btn-success  { background: var(--green);  color: #0a1a12; }
-  .btn-danger   { background: var(--red);    color: #fff; }
-  .btn-ghost    { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border-light); }
-  .btn-stop     { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--yellow); }
+  .btn:hover { opacity: .88; } .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--grad); color: #fff; box-shadow: 0 4px 16px var(--accent-glow); }
+  .btn-success { background: var(--green); color: #052017; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-ghost { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border-light); }
+  .btn-stop { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--yellow); }
   .btn:disabled { opacity: .35; cursor: not-allowed; pointer-events: none; }
 
   .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
 
-  /* ── Tabs ── */
-  .tabs {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 12px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 4px;
-    width: fit-content;
-  }
-  .tab {
-    padding: 5px 14px;
-    border-radius: 7px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    color: var(--muted2);
-    border: none;
-    background: transparent;
-    font-family: var(--font);
-    transition: all .15s;
-  }
-  .tab.active {
-    background: var(--surface2);
-    color: var(--text);
-    border: 1px solid var(--border-light);
-  }
+  .tabs { display: flex; gap: 2px; margin-bottom: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 11px; padding: 4px; width: fit-content; }
+  .tab { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted2); border: none; background: transparent; font-family: var(--font); transition: all .15s; }
+  .tab.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border-light); }
 
-  /* ── File list ── */
-  #file-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .file-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 9px 12px;
-    transition: border-color .15s;
-  }
+  #file-list { display: flex; flex-direction: column; gap: 6px; }
+  .file-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 9px 12px; transition: border-color .15s; }
   .file-row:hover { border-color: var(--border-light); }
-  .file-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    background: var(--surface2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    flex-shrink: 0;
-    overflow: hidden;
-  }
-  .file-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+  .file-icon { width: 32px; height: 32px; border-radius: 7px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; overflow: hidden; }
+  .file-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 7px; }
   .file-info { flex: 1; min-width: 0; }
-  .file-name {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .file-err {
-    font-size: 11px;
-    color: var(--red);
-    margin-top: 1px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .status-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .dot-pending  { background: var(--muted); }
-  .dot-proc     { background: var(--accent); animation: pulse 1s infinite; }
-  .dot-done     { background: var(--green); }
-  .dot-error    { background: var(--red); }
+  .file-name { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-err { font-size: 11px; color: var(--red); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-pending { background: var(--muted); }
+  .dot-proc { background: var(--accent2); animation: pulse 1s infinite; }
+  .dot-done { background: var(--green); }
+  .dot-error { background: var(--red); }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-  .remove-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--muted);
-    font-size: 15px;
-    padding: 2px 4px;
-    border-radius: 4px;
-    line-height: 1;
-    transition: color .15s;
-    flex-shrink: 0;
-  }
+  .remove-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 15px; padding: 2px 4px; border-radius: 4px; line-height: 1; transition: color .15s; flex-shrink: 0; }
   .remove-btn:hover { color: var(--red); }
 
-  /* ── Data table ── */
-  .table-wrap {
-    overflow-x: auto;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-  th {
-    padding: 9px 14px;
-    text-align: left;
-    color: var(--muted2);
-    font-weight: 600;
-    font-size: 11px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface2);
-    white-space: nowrap;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-  }
-  td {
-    padding: 8px 14px;
-    border-bottom: 1px solid var(--border);
-    color: var(--text);
-    white-space: nowrap;
-    max-width: 180px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { padding: 9px 14px; text-align: left; color: var(--muted2); font-weight: 700; font-size: 10.5px; border-bottom: 1px solid var(--border); background: var(--surface2); white-space: nowrap; letter-spacing: .05em; text-transform: uppercase; }
+  td { padding: 8px 14px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: var(--surface2); }
-  .empty-state {
-    padding: 48px 24px;
-    text-align: center;
-    color: var(--muted);
-    font-size: 13px;
-  }
+  .empty-state { padding: 48px 24px; text-align: center; color: var(--muted); font-size: 13px; }
 
-  /* ── Edit cell ── */
   td.editable:hover { cursor: text; background: var(--accent-dim); }
-  td input.cell-input {
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-size: 12px;
-    font-family: var(--font);
-    width: 100%;
-    min-width: 80px;
-  }
+  td input.cell-input { background: transparent; border: none; outline: none; color: var(--text); font-size: 12px; font-family: var(--font); width: 100%; min-width: 80px; }
 
-  /* ── Spinner ── */
   @keyframes spin { to { transform: rotate(360deg); } }
   .spin { display: inline-block; animation: spin .7s linear infinite; }
 
-  /* ── Toast ── */
   #toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--surface2);
-    border: 1px solid var(--border-light);
-    border-radius: 10px;
-    padding: 10px 16px;
-    font-size: 13px;
-    color: var(--text);
-    opacity: 0;
-    transform: translateY(8px);
-    transition: all .25s;
-    pointer-events: none;
-    z-index: 999;
-    max-width: 320px;
+    position: fixed; bottom: 24px; right: 24px; left: auto;
+    background: var(--surface2); border: 1px solid var(--border-light); border-radius: 11px;
+    padding: 11px 16px; font-size: 13px; color: var(--text);
+    opacity: 0; transform: translateY(8px); transition: all .25s; pointer-events: none; z-index: 999; max-width: 320px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.4);
   }
   #toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ───────── Responsive ───────── */
+  @media (max-width: 980px) {
+    .bento { grid-template-columns: repeat(2, 1fr); }
+    .tool-card.featured { grid-column: span 2; }
+  }
+
+  @media (max-width: 760px) {
+    .sidebar {
+      transform: translateX(-100%);
+      width: 78vw; max-width: 280px;
+      box-shadow: 20px 0 60px rgba(0,0,0,.5);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay {
+      display: block; position: fixed; inset: 0; background: rgba(0,0,0,.55);
+      backdrop-filter: blur(2px); z-index: 39; opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    .sidebar-overlay.show { opacity: 1; pointer-events: auto; }
+    .main { margin-left: 0; }
+    .topbar { display: flex; }
+    .dash-shell { padding: 28px 18px 60px; }
+    .tool-shell { padding: 18px 16px 60px; }
+    .bento { grid-template-columns: 1fr; }
+    .tool-card.featured { grid-column: span 1; }
+    .mesh { width: 320px; height: 320px; top: -60px; right: -100px; }
+    .api-section { flex-direction: column; align-items: stretch; }
+    .api-section label { margin-bottom: -4px; }
+    #toast { left: 16px; right: 16px; bottom: 16px; max-width: none; }
+  }
 </style>
 </head>
 <body>
-<div class="shell">
 
-  <!-- Header -->
-  <div class="header">
-    <div class="header-badge">  RG · CNH · CPF · IPTU</div>
-    <h1>Extrator de Dados de Documentos</h1>
-    <p>Processa qualquer imagem de documento em lote e exporta para Excel</p>
-  </div>
+<div class="app">
 
-  <!-- API Key -->
-  <div class="api-section">
-    <label>API KEY</label>
-    <input type="password" id="api-key" placeholder="inserir API KEY... (Hiram)" autocomplete="off">
-    <span id="api-status" style="color:var(--muted)">—</span>
-  </div>
-
-  <!-- Drop zone -->
-  <div id="drop-zone">
-    <div class="drop-icon">🪪</div>
-    <div class="drop-title">Arraste os Documentos aqui ou clique para selecionar</div>
-    <div class="drop-sub">JPG, PNG, WEBP · múltiplos arquivos de uma vez</div>
-    <input type="file" id="file-input" multiple accept="image/*,.jpg,.jpeg,.png,.webp,.bmp">
-  </div>
-
-  <!-- Stats + Controls -->
-  <div id="stats-area" style="display:none">
-    <div class="stats-bar" id="stats-pills"></div>
-    <div class="progress-wrap">
-      <div class="progress-track"><div class="progress-fill" id="progress-fill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div></div>
-      <div class="progress-label" id="progress-label">0% concluído</div>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">IN</div>
+      <div>
+        <h3>Inovare</h3>
+        <span>Contabilidade</span>
+      </div>
     </div>
-    <div class="controls" id="controls"></div>
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('files')" id="tab-files">Arquivos (<span id="tab-files-count">0</span>)</button>
-      <button class="tab" onclick="switchTab('data')" id="tab-data">Dados (<span id="tab-data-count">0</span>)</button>
-    </div>
-  </div>
 
-  <!-- File list -->
-  <div id="panel-files"><div id="file-list"></div></div>
+    <nav>
+      <button class="nav-item active" data-nav="dashboard" onclick="goTo('dashboard')">
+        <span class="ico">◧</span> Dashboard
+      </button>
 
-  <!-- Data table -->
-  <div id="panel-data" style="display:none">
-    <div class="table-wrap">
-      <div class="empty-state" id="table-empty">Nenhum dado extraído ainda. Processe os arquivos na aba Arquivos.</div>
-      <table id="data-table" style="display:none">
-        <thead>
-          <tr>
-            <th>#</th><th>Arquivo</th>
-            <th>Nome</th><th>RG</th><th>CPF</th><th>Nascimento</th>
-            <th>Naturalidade</th><th>Mãe</th><th>Pai</th>
-            <th>Órgão</th><th>Expedição</th><th>Sexo</th>
-          </tr>
-        </thead>
-        <tbody id="data-tbody"></tbody>
-      </table>
+      <div class="nav-section-label">Ferramentas</div>
+      <button class="nav-item" data-nav="extractor" onclick="goTo('extractor')">
+        <span class="ico">🪪</span> Extrator de Documentos
+      </button>
+      <button class="nav-item" onclick="comingSoon('Resumo de PDF')">
+        <span class="ico">📄</span> Resumo de PDF <span class="soon-tag">EM BREVE</span>
+      </button>
+      <button class="nav-item" onclick="comingSoon('E-mail Profissional')">
+        <span class="ico">✉️</span> E-mail Profissional <span class="soon-tag">EM BREVE</span>
+      </button>
+      <button class="nav-item" onclick="comingSoon('Calculadora Trabalhista')">
+        <span class="ico">🧮</span> Calc. Trabalhista <span class="soon-tag">EM BREVE</span>
+      </button>
+      <button class="nav-item" onclick="comingSoon('NF-e → Excel')">
+        <span class="ico">🧾</span> NF-e → Excel <span class="soon-tag">EM BREVE</span>
+      </button>
+      <button class="nav-item" onclick="comingSoon('Conciliação Bancária')">
+        <span class="ico">🏦</span> Conciliação Bancária <span class="soon-tag">EM BREVE</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <div class="user-avatar">H</div>
+        <div>
+          <div class="name">Hiram</div>
+          <div class="role">Equipe contábil</div>
+        </div>
+      </div>
     </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="overlay" onclick="closeDrawer()"></div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="hamburger" onclick="openDrawer()"><span></span></div>
+      <div class="brand-mark" style="width:30px;height:30px;font-size:12px;">IN</div>
+      <div>
+        <h3 style="font-family:var(--font-display);font-size:13px;color:#fff;">Inovare</h3>
+      </div>
+    </div>
+
+    <!-- ───────── Dashboard view ───────── -->
+    <section class="view active" id="view-dashboard">
+      <div class="dash-shell">
+        <div class="mesh"></div>
+
+        <div class="dash-header">
+          <div class="eyebrow"><span class="dot"></span> Hub de Ferramentas</div>
+          <h1>Bom dia, Hiram <span class="wave">👋</span></h1>
+          <p>Ferramentas com IA para agilizar o dia a dia do escritório. Escolha uma ferramenta abaixo para começar.</p>
+        </div>
+
+        <div class="bento" id="bento">
+          <div class="tool-card featured" onclick="goTo('extractor')">
+            <span class="status-corner live">Ativo</span>
+            <div class="tool-icon live">🪪</div>
+            <h3>Extrator de Documentos</h3>
+            <p>Identifica qualquer tipo de documento ou imagem com texto organizado e extrai os dados automaticamente com IA. Processe em lote e exporte tudo para Excel em segundos.</p>
+            <div class="tag-row">
+              <span class="tag tag-live">IA</span><span class="tag tag-live">OCR</span><span class="tag tag-live">EXCEL</span>
+            </div>
+            <span class="featured-cta">Abrir ferramenta <span class="arrow">→</span></span>
+          </div>
+
+          <div class="tool-card locked" onclick="comingSoon('Resumo de PDF')">
+            <span class="status-corner soon">Em breve</span>
+            <div class="tool-icon soon">📄</div>
+            <h3>Resumo de PDF</h3>
+            <p>Faça upload de um PDF e receba um resumo claro e objetivo gerado por IA.</p>
+            <div class="tag-row"><span class="tag">IA</span><span class="tag">PDF</span></div>
+          </div>
+
+          <div class="tool-card locked" onclick="comingSoon('E-mail Profissional')">
+            <span class="status-corner soon">Em breve</span>
+            <div class="tool-icon soon">✉️</div>
+            <h3>E-mail Profissional</h3>
+            <p>Gere e-mails formais prontos para enviar a partir de um contexto simples.</p>
+            <div class="tag-row"><span class="tag">IA</span><span class="tag">ESCRITA</span></div>
+          </div>
+
+          <div class="tool-card locked" onclick="comingSoon('Calculadora Trabalhista')">
+            <span class="status-corner soon">Em breve</span>
+            <div class="tool-icon soon">🧮</div>
+            <h3>Calculadora Trabalhista</h3>
+            <p>Calcule rescisão, férias proporcionais, 13º salário e outros direitos da CLT.</p>
+            <div class="tag-row"><span class="tag">CÁLCULO</span><span class="tag">CLT</span></div>
+          </div>
+
+          <div class="tool-card locked" onclick="comingSoon('NF-e → Excel')">
+            <span class="status-corner soon">Em breve</span>
+            <div class="tool-icon soon">🧾</div>
+            <h3>NF-e / XML → Excel</h3>
+            <p>Converta lotes de notas fiscais XML em planilhas organizadas automaticamente.</p>
+            <div class="tag-row"><span class="tag">FISCAL</span><span class="tag">XML</span></div>
+          </div>
+
+          <div class="tool-card locked" onclick="comingSoon('Conciliação Bancária')">
+            <span class="status-corner soon">Em breve</span>
+            <div class="tool-icon soon">🏦</div>
+            <h3>Conciliação Bancária IA</h3>
+            <p>Cruze extratos bancários com lançamentos e aponte divergências automaticamente.</p>
+            <div class="tag-row"><span class="tag">IA</span><span class="tag">BANCO</span></div>
+          </div>
+        </div>
+
+        <div class="dash-foot">⚡ Todas as ferramentas utilizam inteligência artificial para acelerar seu trabalho.</div>
+      </div>
+    </section>
+
+    <!-- ───────── Extractor view ───────── -->
+    <section class="view" id="view-extractor">
+      <div class="tool-shell">
+
+        <div class="back-row">
+          <button class="back-btn" onclick="goTo('dashboard')">← Voltar</button>
+          <span class="crumb">Hub <b>/</b> Extrator de Documentos</span>
+        </div>
+
+        <div class="header">
+          <div class="header-badge">QUALQUER DOCUMENTO · QUALQUER TEXTO</div>
+          <h1>Extrator Universal de Documentos</h1>
+          <p>Identifica o tipo de documento e extrai qualquer texto organizado em lote, exportando tudo para Excel</p>
+        </div>
+
+        <div class="api-section">
+          <label>API KEY</label>
+          <input type="password" id="api-key" placeholder="inserir API KEY..." autocomplete="off">
+          <span id="api-status" style="color:var(--muted)">—</span>
+        </div>
+
+        <div id="drop-zone">
+          <div class="drop-icon">🪪</div>
+          <div class="drop-title">Arraste qualquer imagem aqui ou clique para selecionar</div>
+          <div class="drop-sub">RG, CNH, notas, comprovantes, tabelas, recibos... JPG, PNG, WEBP · múltiplos arquivos de uma vez</div>
+          <input type="file" id="file-input" multiple accept="image/*,.jpg,.jpeg,.png,.webp,.bmp">
+        </div>
+
+        <div id="stats-area" style="display:none">
+          <div class="stats-bar" id="stats-pills"></div>
+          <div class="progress-wrap">
+            <div class="progress-track"><div class="progress-fill" id="progress-fill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div></div>
+            <div class="progress-label" id="progress-label">0% concluído</div>
+          </div>
+          <div class="controls" id="controls"></div>
+          <div class="tabs">
+            <button class="tab active" onclick="switchTab('files')" id="tab-files">Arquivos (<span id="tab-files-count">0</span>)</button>
+            <button class="tab" onclick="switchTab('data')" id="tab-data">Dados (<span id="tab-data-count">0</span>)</button>
+          </div>
+        </div>
+
+        <div id="panel-files"><div id="file-list"></div></div>
+
+        <div id="panel-data" style="display:none">
+          <div class="table-wrap">
+            <div class="empty-state" id="table-empty">Nenhum dado extraído ainda. Processe os arquivos na aba Arquivos.</div>
+            <table id="data-table" style="display:none">
+              <thead id="data-thead"></thead>
+              <tbody id="data-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
   </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-// ── State ──────────────────────────────────────────────────────────
-const BATCH = 5;
-const FIELDS = [
-  ['nome','Nome'],['rg','RG'],['cpf','CPF'],['data_nascimento','Nascimento'],
-  ['naturalidade','Naturalidade'],['filiacao_mae','Mãe'],['filiacao_pai','Pai'],
-  ['orgao_expedidor','Órgão'],['data_expedicao','Expedição'],['sexo','Sexo']
-];
+// ── Navigation ─────────────────────────────────────────────────────────
+function goTo(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.querySelectorAll('.nav-item[data-nav]').forEach(n => n.classList.toggle('active', n.dataset.nav === view));
+  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  closeDrawer();
+}
+function comingSoon(name) { toast(`✨ ${name} chega em breve`); }
 
-let files     = [];   // {file, name, preview}
-let statuses  = {};   // name → pending|processing|done|error
-let errors    = {};   // name → msg
-let results   = {};   // name → extracted obj
+function openDrawer() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('show'); }
+function closeDrawer() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+
+// ── Spotlight cursor effect on cards ─────────────────────────────────────
+document.querySelectorAll('.tool-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  });
+});
+
+// ── State (extrator) ──────────────────────────────────────────────────
+const BATCH = 5;
+let files     = [];
+let statuses  = {};
+let errors    = {};
+let results   = {};
 let running   = false;
 let stopFlag  = false;
 let activeTab = 'files';
 
-// ── Helpers ────────────────────────────────────────────────────────
 function toast(msg, dur=2800) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -534,49 +698,53 @@ function mediaType(file) {
 
 function apiKey() { return document.getElementById('api-key').value.trim(); }
 
-// ── API Call ───────────────────────────────────────────────────────
-async function extractRG(b64, mt, filename) {
+async function extractDocument(b64, mt, filename) {
   const key = apiKey();
   if (!key) throw new Error('Insira a API Key');
 
-  const prompt = `Você é um extrator de dados de RG brasileiro. Analise a imagem e retorne SOMENTE um objeto JSON puro, sem markdown, sem texto adicional, sem blocos de código. Campos obrigatórios no JSON (null se não encontrar): nome, rg, cpf, data_nascimento, naturalidade, filiacao_mae, filiacao_pai, orgao_expedidor, data_expedicao, sexo.\n\nExtraia todos os dados visíveis neste RG.`;
+  const prompt = `Você é um extrator universal de dados de documentos e imagens com texto organizado (RG, CNH, CPF, comprovantes, notas fiscais, boletos, contratos, tabelas, formulários, carimbos, etiquetas, recibos, etc).
+
+Analise a imagem e identifique automaticamente:
+1. O tipo de documento (ex: "RG", "Nota Fiscal", "Comprovante de Endereço", "Boleto", "Tabela", "Outro").
+2. Todos os campos de texto organizado visíveis, extraindo cada um como um par chave/valor, usando como chave o rótulo mais próximo do dado (ex: se aparece "CPF: 123.456.789-00", a chave é "cpf" e o valor é "123.456.789-00"). Normalize as chaves em snake_case, minúsculas, sem acentos.
+3. Se houver tabelas, extraia como uma lista de objetos (uma linha = um objeto), mantendo os nomes das colunas como chaves.
+4. Ignore elementos puramente visuais (logos, marcas d'água, fotos de rosto) e textos sem rótulo claro de campo (a menos que seja claramente um título/cabeçalho relevante).
+5. Se um campo não estiver legível ou não existir, não o invente — apenas não o inclua.
+
+Retorne SOMENTE um objeto JSON puro, sem markdown, sem texto explicativo, sem blocos de código, no seguinte formato:
+
+{
+  "tipo_documento": "string",
+  "campos": { "chave1": "valor1", "chave2": "valor2" },
+  "tabela": [ { "coluna1": "valor", "coluna2": "valor" } ]
+}
+
+Omita "tabela" se não houver tabela na imagem.`;
 
   const res = await fetch(
     "https://openrouter.ai/api/v1/chat/completions",
     {
       method: 'POST',
       headers: {
-    "Authorization": `Bearer ${key}`,
-    "Content-Type": "application/json",
-    "HTTP-Referer": window.location.origin,
-    "X-Title": "Extrator RG"
-},
-
-body: JSON.stringify({
-    model: "qwen/qwen3-vl-32b-instruct",
-
-    max_tokens: 512,
-
-    temperature: 0,
-
-    messages: [
-        {
+        "Authorization": `Bearer ${key}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": window.location.origin,
+        "X-Title": "Extrator Universal"
+      },
+      body: JSON.stringify({
+        model: "qwen/qwen3-vl-32b-instruct",
+        max_tokens: 1500,
+        temperature: 0,
+        messages: [
+          {
             role: "user",
             content: [
-                {
-                    type: "text",
-                    text: prompt
-                },
-                {
-                    type: "image_url",
-                    image_url: {
-                        url: `data:${mt};base64,${b64}`
-                    }
-                }
+              { type: "text", text: prompt },
+              { type: "image_url", image_url: { url: `data:${mt};base64,${b64}` } }
             ]
-        }
-    ]
-})
+          }
+        ]
+      })
     }
   );
 
@@ -586,24 +754,23 @@ body: JSON.stringify({
   }
 
   const data = await res.json();
-  const text =
-    data.choices?.[0]?.message?.content || "";
+  const text = data.choices?.[0]?.message?.content || "";
   const clean = text.replace(/```json?|```/g, '').trim();
+  let parsed;
   try {
-    return { ...JSON.parse(clean), arquivo: filename };
+    parsed = JSON.parse(clean);
   } catch {
     const m = clean.match(/\{[\s\S]*\}/);
-    if (m) return { ...JSON.parse(m[0]), arquivo: filename };
-    throw new Error('Resposta inválida da API');
+    if (m) parsed = JSON.parse(m[0]);
+    else throw new Error('Resposta inválida da API');
   }
+  return {
+    arquivo: filename,
+    tipo_documento: parsed.tipo_documento || 'Não identificado',
+    campos: parsed.campos || {},
+    tabela: Array.isArray(parsed.tabela) ? parsed.tabela : null
+  };
 }
-
-// ── organização dos arquivos ────────────────────────────────────────────────
-
-const id = crypto.randomUUID();
-  files.push({ file: f, id, name: f.name, preview });
-  statuses[id] = 'pending'; // chave = id, não nome
-
 
 async function addFiles(fileList) {
   const imgs = Array.from(fileList).filter(f => {
@@ -633,7 +800,6 @@ function clearAll() {
   render();
 }
 
-// ── processamento ─────────────────────────────────────────────────────
 async function processFiles() {
   if (!apiKey()) { toast('⚠️ Insira a API Key antes de processar'); return; }
   const toProc = files.filter(f => ['pending','error'].includes(statuses[f.name]));
@@ -650,7 +816,7 @@ async function processFiles() {
     const settled = await Promise.allSettled(
       batch.map(async ({ file, name }) => {
         const b64 = await fileToBase64(file);
-        return extractRG(b64, mediaType(file), name);
+        return extractDocument(b64, mediaType(file), name);
       })
     );
 
@@ -678,25 +844,39 @@ function retryErrors() {
   render();
 }
 
-// ── exportação ─────────────────────────────────────────────────────────
 function exportExcel() {
   const rows = Object.values(results);
   if (!rows.length) { toast('Nenhum dado para exportar'); return; }
+
+  // colunas dinâmicas: união de todas as chaves de "campos" entre os arquivos
+  const allKeys = [];
+  rows.forEach(r => Object.keys(r.campos || {}).forEach(k => { if (!allKeys.includes(k)) allKeys.push(k); }));
+
   const sheet = rows.map((r, i) => ({
     '#': i + 1,
     'Arquivo': r.arquivo,
-    ...Object.fromEntries(FIELDS.map(([k, l]) => [l, r[k] || '']))
+    'Tipo': r.tipo_documento || '',
+    ...Object.fromEntries(allKeys.map(k => [k, r.campos?.[k] || '']))
   }));
   const ws = XLSX.utils.json_to_sheet(sheet);
   const keys = Object.keys(sheet[0]);
   ws['!cols'] = keys.map(k => ({ wch: Math.max(k.length, ...sheet.map(r => String(r[k]||'').length)) + 2 }));
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Dados RG');
-  XLSX.writeFile(wb, `rg_admissoes_${new Date().toISOString().slice(0,10)}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, ws, 'Dados Extraídos');
+
+  // tabelas detectadas em cada arquivo viram abas extras
+  rows.forEach(r => {
+    if (r.tabela && r.tabela.length) {
+      const tws = XLSX.utils.json_to_sheet(r.tabela);
+      const safeName = `Tab_${r.arquivo}`.replace(/[\\/?*[\]:]/g, '').slice(0, 31);
+      XLSX.utils.book_append_sheet(wb, tws, safeName || 'Tabela');
+    }
+  });
+
+  XLSX.writeFile(wb, `extracao_documentos_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast(`📥 Excel exportado com ${rows.length} registro(s)`);
 }
 
-//  render
 function switchTab(tab) {
   activeTab = tab;
   document.getElementById('tab-files').classList.toggle('active', tab === 'files');
@@ -714,22 +894,18 @@ function render() {
   const progress = total > 0 ? Math.round((done / total) * 100) : 0;
   const resCount = Object.keys(results).length;
 
-  // API
   const key = apiKey();
   const apiEl = document.getElementById('api-status');
-  if (!key)                                                    { apiEl.textContent = '—';           apiEl.style.color = 'var(--muted)'; }
-  else if (key.startsWith('sk') || key.startsWith('AQ.'))  { apiEl.textContent = '✓ Válida';    apiEl.style.color = 'var(--green)'; }
+  if (!key)                                                  { apiEl.textContent = '—';           apiEl.style.color = 'var(--muted)'; }
+  else if (key.startsWith('sk') || key.startsWith('AQ.'))    { apiEl.textContent = '✓ Válida';    apiEl.style.color = 'var(--green)'; }
   else                                                        { apiEl.textContent = '⚠ Verifique'; apiEl.style.color = 'var(--yellow)'; }
 
-  // Stats area
   const statsArea = document.getElementById('stats-area');
   statsArea.style.display = total > 0 ? '' : 'none';
 
-  // Tabs
   document.getElementById('tab-files-count').textContent = total;
   document.getElementById('tab-data-count').textContent  = resCount;
 
-  // spans
   const pills = document.getElementById('stats-pills');
   pills.innerHTML = [
     done     ? `<span class="stat-pill done">✓ ${done} concluídos</span>`       : '',
@@ -739,14 +915,12 @@ function render() {
     `<span style="color:var(--muted);font-size:11px">/ ${total} total</span>`,
   ].join('');
 
-  // progressos
   document.getElementById('progress-fill').style.width = progress + '%';
   const batchNum    = total > 0 ? Math.ceil((done + proc) / BATCH) : 0;
   const totalBatch  = Math.ceil(total / BATCH);
   document.getElementById('progress-label').textContent =
     `${progress}% concluído` + (running && totalBatch > 0 ? ` · lote ${batchNum} de ${totalBatch}` : '');
 
-  // controles
   const ctrl = document.getElementById('controls');
   ctrl.innerHTML = '';
   if (errCount > 0 && !running) ctrl.innerHTML += `<button class="btn btn-ghost" onclick="retryErrors()">↺ Tentar erros (${errCount})</button>`;
@@ -758,26 +932,43 @@ function render() {
   }
   if (!running && total > 0) ctrl.innerHTML += `<button class="btn btn-ghost" onclick="clearAll()" style="margin-left:auto">🗑 Limpar tudo</button>`;
 
-  // arquivos
   const list = document.getElementById('file-list');
-  function createFileRow({ name, preview }) {
-  const row = document.createElement('div');
-  row.className = 'file-row';
+  list.innerHTML = '';
+  files.forEach(({ name, preview }) => {
+    const st = statuses[name];
+    const row = document.createElement('div');
+    row.className = 'file-row';
 
-  const nameEl = document.createElement('div');
-  nameEl.className = 'file-name';
-  nameEl.textContent = name; // textContent é mais seguro q o inner
+    const icon = document.createElement('div');
+    icon.className = 'file-icon';
+    icon.innerHTML = `<img src="${preview}" alt="">`;
 
-  const removeBtn = document.createElement('button');
-  removeBtn.className = 'remove-btn';
-  removeBtn.textContent = '✕';
-  removeBtn.addEventListener('click', () => removeFile(name)); // closure segura
+    const dot = document.createElement('div');
+    dot.className = 'status-dot dot-' + (st === 'processing' ? 'proc' : st);
 
-  row.append(nameEl, removeBtn);
-  return row;
-}
+    const info = document.createElement('div');
+    info.className = 'file-info';
+    const nameEl = document.createElement('div');
+    nameEl.className = 'file-name';
+    nameEl.textContent = name;
+    info.appendChild(nameEl);
+    if (st === 'error' && errors[name]) {
+      const errEl = document.createElement('div');
+      errEl.className = 'file-err';
+      errEl.textContent = errors[name];
+      info.appendChild(errEl);
+    }
 
-  // dados
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
+    removeBtn.textContent = '✕';
+    removeBtn.addEventListener('click', () => removeFile(name));
+
+    row.append(icon, dot, info, removeBtn);
+    list.appendChild(row);
+  });
+
+  const thead = document.getElementById('data-thead');
   const tbody = document.getElementById('data-tbody');
   const tableEl = document.getElementById('data-table');
   const emptyEl = document.getElementById('table-empty');
@@ -786,27 +977,41 @@ function render() {
     tableEl.style.display = 'none'; emptyEl.style.display = '';
   } else {
     tableEl.style.display = ''; emptyEl.style.display = 'none';
+
+    // colunas dinâmicas: união de todas as chaves encontradas entre os documentos
+    const allKeys = [];
+    rows.forEach(r => Object.keys(r.campos || {}).forEach(k => { if (!allKeys.includes(k)) allKeys.push(k); }));
+
+    thead.innerHTML = `<tr>
+      <th>#</th><th>Arquivo</th><th>Tipo</th>
+      ${allKeys.map(k => `<th>${k.replace(/_/g,' ')}</th>`).join('')}
+      <th>Tabela</th>
+    </tr>`;
+
     tbody.innerHTML = rows.map((r, i) => `
       <tr>
         <td style="color:var(--muted)">${i+1}</td>
         <td style="color:var(--muted2);max-width:140px">${r.arquivo}</td>
-        ${FIELDS.map(([k]) => `<td class="editable" ondblclick="editCell(this,'${r.arquivo}','${k}')">${r[k]||'—'}</td>`).join('')}
+        <td><span class="tag" style="white-space:nowrap">${r.tipo_documento || '—'}</span></td>
+        ${allKeys.map(k => `<td class="editable" ondblclick="editCell(this,'${r.arquivo}','${k}')">${r.campos?.[k] || '—'}</td>`).join('')}
+        <td style="color:var(--muted2)">${r.tabela && r.tabela.length ? `📊 ${r.tabela.length} linha(s)` : '—'}</td>
       </tr>`).join('');
   }
 }
 
-// ── Inline edit ────────────────────────────────────────────────────
 function editCell(td, arquivo, field) {
-  const cur = results[arquivo]?.[field] || '';
+  const cur = results[arquivo]?.campos?.[field] || '';
   td.innerHTML = `<input class="cell-input" value="${cur.replace(/"/g,'&quot;')}" onblur="commitCell(this,'${arquivo}','${field}')" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.blur();}">`;
   td.querySelector('input').focus();
 }
 function commitCell(input, arquivo, field) {
-  if (results[arquivo]) results[arquivo][field] = input.value;
+  if (results[arquivo]) {
+    if (!results[arquivo].campos) results[arquivo].campos = {};
+    results[arquivo].campos[field] = input.value;
+  }
   render();
 }
 
-// ── Events ─────────────────────────────────────────────────────────
 const drop = document.getElementById('drop-zone');
 drop.addEventListener('click', () => document.getElementById('file-input').click());
 drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag-over'); });
