@@ -16,6 +16,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth.js/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&display=swap');
 
@@ -400,9 +401,10 @@
     font-size: 12px; font-weight: 700; cursor: pointer; border: none; font-family: var(--font);
     transition: opacity .15s, transform .1s, box-shadow .15s; white-space: nowrap;
   }
+  .controls .btn { margin-top: 12px; }
   .btn:hover { opacity: .88; } .btn:active { transform: scale(.97); }
   .btn-primary { background: var(--grad); color: #fff; box-shadow: 0 4px 16px var(--accent-glow); }
-  .btn-success { background: var(--green); color: #052017; }
+  .btn-success { background: var(--green); color: #052017;}
   .btn-danger { background: var(--red); color: #fff; }
   .btn-ghost { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border-light); }
   .btn-stop { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--yellow); }
@@ -864,6 +866,9 @@
       <button class="nav-item" data-nav="limpador" onclick="goTo('limpador')">
         <span class="ico">🧹</span> Limpador de Texto
       </button>
+      <button class="nav-item" data-nav="pdfjpg" onclick="goTo('pdfjpg')">
+        <span class="ico">🖼️</span> Conversor PDF ⇄ JPG
+      </button>
       <button class="nav-item" data-nav="datas" onclick="goTo('datas')">
         <span class="ico">📅</span> Calculadora de Datas
       </button>
@@ -961,6 +966,13 @@
               <h3>Limpador de Texto</h3>
               <p>Remove espaços e linhas extras, corrige CPF/CNPJ e telefones, e converte maiúsculas/minúsculas.</p>
               <div class="tag-row"><span class="tag">TEXTO</span><span class="dot-sep"></span><span class="tag">FORMATAÇÃO</span></div>
+            </div>
+
+            <div class="tool-card" onclick="goTo('pdfjpg')">
+              <div class="tool-icon">🖼️</div>
+              <h3>Conversor PDF ⇄ JPG</h3>
+              <p>Transforme páginas de PDF em imagens JPG ou junte várias imagens em um único arquivo PDF, na hora.</p>
+              <div class="tag-row"><span class="tag">ARQUIVOS</span><span class="dot-sep"></span><span class="tag">CONVERSÃO</span></div>
             </div>
           </div>
         </div>
@@ -1336,6 +1348,54 @@
         </div>
 
         <div id="clean-result" style="display:none"></div>
+
+      </div>
+    </section>
+
+    <!-- ───────── conversor pdf ⇄ jpg ───────── -->
+    <section class="view" id="view-pdfjpg">
+      <div class="tool-shell">
+
+        <div class="back-row">
+          <button class="back-btn" onclick="goTo('dashboard')">← Voltar</button>
+          <span class="crumb">Hub <b>/</b> Conversor PDF ⇄ JPG</span>
+        </div>
+
+        <div class="header">
+          <div class="header-badge" style="color:var(--accent2);border-color:rgba(34,211,238,.35);background:rgba(34,211,238,.12)">SEM IA · 100% LOCAL</div>
+          <h1>Conversor PDF ⇄ JPG</h1>
+          <p>Converta páginas de PDF em imagens JPG ou junte várias imagens em um único PDF — tudo processado no seu navegador.</p>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" id="pj-tab-p2j" onclick="switchPdfJpgTab('p2j')">PDF → JPG</button>
+          <button class="tab" id="pj-tab-j2p" onclick="switchPdfJpgTab('j2p')">JPG → PDF</button>
+        </div>
+
+        <div id="pj-panel-p2j">
+          <div class="dropzone" id="pj-pdf-drop">
+            <div class="drop-icon">📕</div>
+            <div class="drop-title">Arraste um PDF aqui ou clique para selecionar</div>
+            <div class="drop-sub">Cada página do PDF vira uma imagem JPG</div>
+            <input type="file" id="pj-pdf-input" accept="application/pdf" style="display:none">
+          </div>
+          <div class="progress-wrap" id="pj-pdf-progress" style="display:none">
+            <div class="progress-track"><div class="progress-fill" id="pj-pdf-progress-fill"></div></div>
+            <div class="progress-label" id="pj-pdf-progress-label"></div>
+          </div>
+          <div id="pj-pdf-results"></div>
+        </div>
+
+        <div id="pj-panel-j2p" style="display:none">
+          <div class="dropzone" id="pj-img-drop">
+            <div class="drop-icon">🖼️</div>
+            <div class="drop-title">Arraste imagens aqui ou clique para selecionar</div>
+            <div class="drop-sub">JPG, PNG, WEBP · a ordem de seleção vira a ordem das páginas</div>
+            <input type="file" id="pj-img-input" accept="image/*" multiple style="display:none">
+          </div>
+          <div id="pj-img-list" style="margin-top:12px"></div>
+          <button class="btn btn-primary" id="pj-img-generate-btn" style="display:none;margin-top:14px" onclick="generatePdfFromImages()">📄 Gerar PDF (<span id="pj-img-count">0</span>)</button>
+        </div>
 
       </div>
     </section>
@@ -2497,6 +2557,105 @@ function calcularDatas() {
 if (window.pdfjsLib) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
+
+// ══════════════════════════════════════════════════════════════════════
+// CONVERSOR PDF ⇄ JPG — 100% local, sem IA
+// ══════════════════════════════════════════════════════════════════════
+function switchPdfJpgTab(tab) {
+  document.getElementById('pj-tab-p2j').classList.toggle('active', tab === 'p2j');
+  document.getElementById('pj-tab-j2p').classList.toggle('active', tab === 'j2p');
+  document.getElementById('pj-panel-p2j').style.display = tab === 'p2j' ? '' : 'none';
+  document.getElementById('pj-panel-j2p').style.display = tab === 'j2p' ? '' : 'none';
+}
+
+// ── PDF → JPG ──
+let pjPdfImages = [];
+async function convertPdfToJpgs(file) {
+  pjPdfImages = [];
+  document.getElementById('pj-pdf-results').innerHTML = '';
+  const prog = document.getElementById('pj-pdf-progress'), fill = document.getElementById('pj-pdf-progress-fill'), label = document.getElementById('pj-pdf-progress-label');
+  prog.style.display = '';
+  try {
+    const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const base = file.name.replace(/\.pdf$/i, '');
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 2 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width; canvas.height = viewport.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      pjPdfImages.push({ name: `${base}_pag${i}.jpg`, dataUrl: canvas.toDataURL('image/jpeg', 0.92) });
+      fill.style.width = Math.round(i / pdf.numPages * 100) + '%';
+      label.textContent = `Página ${i} de ${pdf.numPages}`;
+    }
+    renderPjPdfResults();
+    toast(`✅ ${pdf.numPages} página(s) convertida(s)`);
+  } catch (e) {
+    toast('❌ ' + e.message);
+  } finally { prog.style.display = 'none'; }
+}
+
+function renderPjPdfResults() {
+  const wrap = document.getElementById('pj-pdf-results');
+  if (!pjPdfImages.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `
+    <div class="controls"><button class="btn btn-success" onclick="downloadAllPjImages()">⬇ Baixar todas (${pjPdfImages.length})</button></div>
+    <div class="notes-grid">${pjPdfImages.map((img, i) => `
+      <div class="note-card" style="gap:10px">
+        <img src="${img.dataUrl}" style="width:100%;border-radius:8px;max-height:140px;object-fit:cover">
+        <div class="note-meta"><span>${img.name}</span><button class="icon-btn" onclick="downloadPjImage(${i})">⬇</button></div>
+      </div>`).join('')}</div>`;
+}
+function downloadPjImage(i) {
+  const img = pjPdfImages[i], a = document.createElement('a');
+  a.href = img.dataUrl; a.download = img.name; a.click();
+}
+function downloadAllPjImages() { pjPdfImages.forEach((_, i) => setTimeout(() => downloadPjImage(i), i * 250)); }
+
+// ── JPG → PDF ──
+let pjImgFiles = [];
+async function addPjImages(fileList) {
+  for (const f of Array.from(fileList).filter(f => f.type.startsWith('image/')))
+    pjImgFiles.push({ file: f, preview: await previewURL(f) });
+  renderPjImgList();
+}
+function removePjImage(i) { pjImgFiles.splice(i, 1); renderPjImgList(); }
+function renderPjImgList() {
+  document.getElementById('pj-img-count').textContent = pjImgFiles.length;
+  document.getElementById('pj-img-generate-btn').style.display = pjImgFiles.length ? '' : 'none';
+  document.getElementById('pj-img-list').innerHTML = pjImgFiles.map((it, i) => `
+    <div class="file-row">
+      <div class="file-icon"><img src="${it.preview}" alt=""></div>
+      <div class="file-info"><div class="file-name">${it.file.name}</div></div>
+      <button class="remove-btn" onclick="removePjImage(${i})">✕</button>
+    </div>`).join('');
+}
+async function generatePdfFromImages() {
+  if (!pjImgFiles.length) return;
+  const { jsPDF } = window.jspdf;
+  let pdf;
+  for (let i = 0; i < pjImgFiles.length; i++) {
+    const img = await new Promise(res => { const im = new Image(); im.onload = () => res(im); im.src = pjImgFiles[i].preview; });
+    const orientation = img.width > img.height ? 'l' : 'p';
+    if (i === 0) pdf = new jsPDF({ orientation, unit: 'px', format: [img.width, img.height] });
+    else pdf.addPage([img.width, img.height], orientation);
+    pdf.addImage(img, 'JPEG', 0, 0, img.width, img.height);
+  }
+  pdf.save(`imagens_convertidas_${new Date().toISOString().slice(0, 10)}.pdf`);
+  toast(`✅ PDF gerado com ${pjImgFiles.length} imagem(ns)`);
+}
+
+// ── dropzones ──
+function wireDropzone(dropId, inputId, onFiles) {
+  const drop = document.getElementById(dropId), input = document.getElementById(inputId);
+  drop.addEventListener('click', () => input.click());
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag-over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag-over'); onFiles(e.dataTransfer.files); });
+  input.addEventListener('change', e => onFiles(e.target.files));
+}
+wireDropzone('pj-pdf-drop', 'pj-pdf-input', files => files[0] && convertPdfToJpgs(files[0]));
+wireDropzone('pj-img-drop', 'pj-img-input', addPjImages);
 
 render();
 
